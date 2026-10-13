@@ -15,13 +15,13 @@ def _check(value, name):
             _check(v, name)
 
 
-def _physics(node, name=""):
+def _values(node, field, name):
     if "value" in node:
-        if not str(node.get("source", "")).strip():
-            raise ValueError(f"{name}: missing source")
+        if not str(node.get(field, "")).strip():
+            raise ValueError(f"{name}: missing {field}")
         _check(node["value"], name)
         return node["value"]
-    return {k: _physics(v, f"{name}.{k}" if name else k) for k, v in node.items()}
+    return {k: _values(v, field, f"{name}.{k}") for k, v in node.items()}
 
 
 def _merge(a, b, name=""):
@@ -32,7 +32,7 @@ def _merge(a, b, name=""):
         elif isinstance(out[k], dict) and isinstance(v, dict):
             out[k] = _merge(out[k], v, f"{name}{k}.")
         else:
-            raise ValueError(f"{name}{k}: defined in both physics and simulation")
+            raise ValueError(f"{name}{k}: defined in more than one section")
     return out
 
 
@@ -40,7 +40,8 @@ def load(path=PATH):
     with open(path, encoding="utf-8") as fh:
         raw = yaml.safe_load(fh)
     _check(raw["simulation"], "simulation")
-    return _merge(_physics(raw["physics"]), raw["simulation"])
+    merged = _merge(_values(raw["physics"], "source", "physics"), _values(raw["design"], "reason", "design"))
+    return _merge(merged, raw["simulation"])
 
 
 CFG = load()

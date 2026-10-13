@@ -51,12 +51,13 @@ A pre-generated copy of all results is already included in `results/`, in case y
 
 Every model parameter lives in `config.yaml`. The simulation code holds no parameter values of its own; it reads them through `src/config.py`.
 
-The file has two top-level sections:
+The file has three top-level sections:
 
-- `physics` holds everything that describes the modelled system: hardware, channels, attacks, protocols and security. Every entry states where its value comes from.
-- `simulation` holds how the model is run and plotted: seeds, durations, grids, numerical tolerances and the cases each figure shows. These are plain values with no source, because they are choices about the computation, not claims about the world.
+- `physics` holds claims about the world: real hardware, channels, attacks and security bounds. Every entry states where its value comes from.
+- `design` holds choices about how the system is built or analysed: buffer and pool depths, demand and load levels, pool capacities, the multipath 2-of-3 choice, the detector's feature windows and classifier settings, the false-alarm budget. Every entry gives a short reason. These are not claims that need evidence; a different designer could pick differently.
+- `simulation` holds how the model is run and plotted: seeds, durations, grids, numerical tolerances and the cases each figure shows. These are plain values with no source or reason.
 
-A `physics` entry has a `value` and a `source`, and may have a `unit` and a `note`. A `simulation` entry is just a value:
+A `physics` entry has a `value` and a `source`, and may have a `unit` and a `note`. A `design` entry has a `value` and a `reason`, and may have a `unit`. A `simulation` entry is just a value:
 
 ```yaml
 physics:
@@ -66,6 +67,12 @@ physics:
       unit: "dB/km"
       source: "Gisin, N., Ribordy, G., Tittel, W., Zbinden, H. (2002). Quantum cryptography. ..."
       note: "The review gives 0.2 dB/km as the attenuation of standard telecom fibre at 1550 nm."
+
+design:
+  delivery:
+    k_of_n:
+      value: 2
+      reason: "number of paths that must deliver in the multipath strategies"
 
 simulation:
   delivery:
@@ -78,21 +85,24 @@ A `source` is one of two things:
 - A published reference with authors, year, title and a DOI or arXiv number. Each one was checked against its DOI or arXiv record and against the paper's abstract or full text. Where the paper supports a value without stating it exactly, the `note` says so.
 - The word `assumption` followed by a one-line reason. This covers design choices, modelled quantities and anything for which no reference could be verified.
 
-The file has 101 physics parameters and 90 simulation settings. Seven physics parameters carry a published reference:
+The file has 65 physics parameters, 36 design choices and 90 simulation settings. Eight physics parameters carry a published reference:
 
 | Parameter | Value | Reference |
 | --- | --- | --- |
 | Fibre attenuation | 0.2 dB/km | Gisin et al. 2002, Rev. Mod. Phys. 74, 145 |
 | Detector efficiency | 0.85 | Marsili et al. 2013, Nature Photonics 7, 210 |
+| Dark-count probability | 1e-8 per pulse | Grasselli and Curty 2019, New J. Phys. 21, 073001 |
 | Memory efficiency | 0.9 | Wang et al. 2019, Nature Photonics 13, 346 |
 | Bell-measurement efficiency | 0.5 | Calsamiglia and Lütkenhaus 2001, Appl. Phys. B 72, 67 |
 | Ping-pong round-trip bound | 0.75 | Zhang 2004, arXiv:quant-ph/0402099 |
 | Finite-key correction coefficient | 7 | Scarani and Renner 2008, Phys. Rev. Lett. 100, 200501 |
 | Error-correction efficiency | 1.16 | Lim et al. 2014, Phys. Rev. A 89, 022307 |
 
-The other 94 physics parameters are assumptions and are labelled as such. For the detector and memory efficiencies the papers show the value is achievable but do not state that exact number; their notes say so.
+The other 57 physics parameters are assumptions and are labelled as such. Most of them are the modelled telemetry and attack signatures and the judgement scores of the design-space sweep.
 
-Both sections use the same group names, and the code sees them merged, so `delivery` contains its physics parameters and its simulation settings together:
+Three of the references support a value without measuring it. For the detector and memory efficiencies the papers show the value is achievable but do not state that exact number. For the dark-count probability the paper uses 1e-8 as an illustrative value with no experimental basis. The notes in `config.yaml` say so in each case.
+
+All three sections use the same group names, and the code sees them merged, so `delivery` contains its physics parameters, its design choices and its simulation settings together:
 
 | Group | What it holds |
 | --- | --- |
@@ -120,7 +130,7 @@ Moving the parameters into `config.yaml` did not change any result. Computing th
 
 - `run_all.py` — entry point
 - `config.yaml` — every parameter, with its source
-- `src/config.py` — loads `config.yaml`, checks that every value is numeric and every physics parameter has a source
+- `src/config.py` — loads `config.yaml`, checks that every value is numeric, every physics parameter has a source and every design choice has a reason
 - `src/figures.py` — builds every figure and the numbers file
 - `src/core.py` — density matrices, Bell states, Holevo information, key-rate formulas
 - `src/transports.py` — fiber link model and secure rate of each transport

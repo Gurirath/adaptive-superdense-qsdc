@@ -13,7 +13,8 @@ physics:
     p_dark:
       value: 1.0e-08
       unit: "probability per pulse"
-      source: "assumption: equivalent to about 10 dark counts per second in a 1 ns detection window, chosen as a low-noise detector setting"
+      source: "Grasselli, F., Curty, M. (2019). Practical decoy-state method for twin-field quantum key distribution. New Journal of Physics 21, 073001. DOI 10.1088/1367-2630/ab2b00"
+      note: "The paper uses 1e-8 as one of three illustrative dark-count probabilities (1e-6, 1e-7, 1e-8) and gives no experimental basis for it. It is cited as a value used in the literature, not as a measurement."
     e_mis:
       value: 0.01
       unit: "fraction"
@@ -52,10 +53,6 @@ physics:
       value: 10.0
       unit: "Hz"
       source: "assumption: heralded entanglement rate for the device-independent option at zero distance, a placeholder value not taken from an experiment"
-    block_bits:
-      value: 1000000.0
-      unit: "bits"
-      source: "assumption: block size used when the finite-key penalty is switched on in the transport model"
   transport:
     di_qber:
       value: 0.02
@@ -86,48 +83,7 @@ physics:
     swap_memory_factor:
       value: 2
       source: "assumption: heuristic factor in the memory-assisted swapping overhead 1 + coeff * factor * log2(hops)"
-    hop_length_km:
-      value: 25.0
-      unit: "km"
-      source: "assumption: fibre length of every hop"
-    demand_bps:
-      value: 256000.0
-      unit: "bits/s"
-      source: "assumption: key demand of one 256 kbit/s one-time-pad stream"
-    deadline_s:
-      value: 1
-      unit: "s"
-      source: "assumption: a key request must be served within one time step"
-    pool_cap_bits:
-      value: 500000000.0
-      unit: "bits"
-      source: "assumption: per-hop key pool capacity"
-    pool_initial_divisor:
-      value: 10
-      source: "assumption: pools start at one tenth of capacity"
-    paths:
-      value: 3
-      source: "assumption: number of disjoint paths in the multipath strategies"
-    k_of_n:
-      value: 2
-      source: "assumption: number of paths that must deliver in the multipath strategies"
-  pools:
-    trace:
-      hops:
-        value: 4
-        source: "assumption: default path length for the pool time-series trace"
-      load:
-        value: 0.8
-        source: "assumption: default demand as a fraction of average supply"
-      buffer_s:
-        value: 120
-        unit: "s"
-        source: "assumption: default pool depth in seconds of demand"
   multicast:
-    hub_link_km:
-      value: 20.0
-      unit: "km"
-      source: "assumption: fibre length from the hub to each receiver"
     key_frac_ghz:
       value: 0.8
       unit: "secure bits per GHZ state"
@@ -140,33 +96,6 @@ physics:
       value: 1000000000.0
       unit: "Hz"
       source: "assumption: clock rate of the pair-source-based GHZ scheme, kept as its own parameter because the original code did not tie it to link.clock_hz"
-    buffer_s:
-      value: 120
-      unit: "s"
-      source: "assumption: default per-receiver pool depth in seconds of demand"
-  hybrid:
-    link_km:
-      value: 2.0
-      unit: "km"
-      source: "assumption: default link length for the QSDC plus pool hybrid"
-    demand_frac:
-      value: 0.8
-      source: "assumption: demand as a fraction of the average key supply"
-    buffer_s:
-      value: 120
-      unit: "s"
-      source: "assumption: pool depth in seconds of demand"
-  scheduling:
-    receivers:
-      value: 16
-      source: "assumption: default number of receivers sharing one source"
-    margin:
-      value: 1.2
-      source: "assumption: default source capacity as a multiple of total demand"
-    buffer_s:
-      value: 60
-      unit: "s"
-      source: "assumption: default per-receiver pool depth in seconds of demand"
   finite_key:
     epsilon:
       value: 1.0e-10
@@ -179,25 +108,6 @@ physics:
       value: 1.16
       source: "Lim, C. C. W., Curty, M., Walenta, N., Xu, F., Zbinden, H. (2014). Concise security bounds for practical decoy-state quantum key distribution. Physical Review A 89, 022307. DOI 10.1103/PhysRevA.89.022307"
       note: "The paper fixes the error-correction efficiency at 1.16 in its simulations."
-    pe_fraction:
-      value: 0.1
-      source: "assumption: fraction of each block sacrificed for parameter estimation"
-    min_block:
-      value: 1000.0
-      unit: "pairs"
-      source: "assumption: blocks smaller than this are treated as yielding no key"
-    deadline_s:
-      value: 1.0
-      unit: "s"
-      source: "assumption: just-in-time delivery must finish a block within one second"
-    pool_block_cap:
-      value: 10000000000.0
-      unit: "pairs"
-      source: "assumption: largest block a pool accumulates before post-processing"
-    pool_accumulation_s:
-      value: 3600
-      unit: "s"
-      source: "assumption: a pool can accumulate pairs for up to one hour per block"
   detection:
     mean_attack_interval_s:
       value: 1800
@@ -303,43 +213,7 @@ physics:
     chsh_noise_sigma:
       value: 0.01
       source: "assumption: measurement noise on the CHSH estimate"
-    feature_windows_s:
-      value: [5, 15, 60]
-      unit: "s"
-      source: "assumption: rolling-mean windows used as detector features"
-    baseline_window_s:
-      value: 600
-      unit: "s"
-      source: "assumption: rolling-median window used as the slow baseline"
-    correlation_windows_s:
-      value: [15, 60]
-      unit: "s"
-      source: "assumption: windows for the error-rate versus dark-count correlation feature"
-    correlation_min_periods:
-      value: 3
-      source: "assumption: minimum samples before a rolling correlation is reported"
-    false_alarm:
-      value: 0.01
-      source: "assumption: false-alarm budget at which all detectors are compared"
-    multi_monitor_count:
-      value: 4
-      source: "assumption: the false-alarm budget is split equally across the four monitored quantities"
-    cusum_slack:
-      value: 0.5
-      source: "assumption: conventional CUSUM slack of half a standard deviation"
-    cusum_cap_factor:
-      value: 3
-      source: "assumption: the CUSUM statistic is capped at 3 times its threshold so alarms clear"
-    classifier_max_iter:
-      value: 300
-      source: "assumption: gradient-boosting hyperparameter, not tuned against real data"
-    classifier_learning_rate:
-      value: 0.08
-      source: "assumption: gradient-boosting hyperparameter, not tuned against real data"
   sweep:
-    qsdc_non_jit_on_time:
-      value: 0.0
-      source: "assumption: keyless transports cannot use stored keys, so they score zero with pooled delivery"
     ping_pong_rate:
       value: 0.0
       unit: "bits/s"
@@ -399,9 +273,144 @@ physics:
           pool_pqc_fallback: 0.25
           other: 0.0
         source: "assumption: judgement score; falling back to post-quantum cryptography is only computationally secure"
+
+design:
+  link:
+    block_bits:
+      value: 1000000.0
+      unit: "bits"
+      reason: "block size used when the finite-key penalty is switched on in the transport model"
+  delivery:
+    hop_length_km:
+      value: 25.0
+      unit: "km"
+      reason: "fibre length of every hop"
+    demand_bps:
+      value: 256000.0
+      unit: "bits/s"
+      reason: "key demand of one 256 kbit/s one-time-pad stream"
+    deadline_s:
+      value: 1
+      unit: "s"
+      reason: "a key request must be served within one time step"
+    pool_cap_bits:
+      value: 500000000.0
+      unit: "bits"
+      reason: "per-hop key pool capacity"
+    pool_initial_divisor:
+      value: 10
+      reason: "pools start at one tenth of capacity"
+    paths:
+      value: 3
+      reason: "number of disjoint paths in the multipath strategies"
+    k_of_n:
+      value: 2
+      reason: "number of paths that must deliver in the multipath strategies"
+  pools:
+    trace:
+      hops:
+        value: 4
+        reason: "default path length for the pool time-series trace"
+      load:
+        value: 0.8
+        reason: "default demand as a fraction of average supply"
+      buffer_s:
+        value: 120
+        unit: "s"
+        reason: "default pool depth in seconds of demand"
+  multicast:
+    hub_link_km:
+      value: 20.0
+      unit: "km"
+      reason: "fibre length from the hub to each receiver"
+    buffer_s:
+      value: 120
+      unit: "s"
+      reason: "default per-receiver pool depth in seconds of demand"
+  hybrid:
+    link_km:
+      value: 2.0
+      unit: "km"
+      reason: "default link length for the QSDC plus pool hybrid"
+    demand_frac:
+      value: 0.8
+      reason: "demand as a fraction of the average key supply"
+    buffer_s:
+      value: 120
+      unit: "s"
+      reason: "pool depth in seconds of demand"
+  scheduling:
+    receivers:
+      value: 16
+      reason: "default number of receivers sharing one source"
+    margin:
+      value: 1.2
+      reason: "default source capacity as a multiple of total demand"
+    buffer_s:
+      value: 60
+      unit: "s"
+      reason: "default per-receiver pool depth in seconds of demand"
+  finite_key:
+    pe_fraction:
+      value: 0.1
+      reason: "fraction of each block sacrificed for parameter estimation"
+    min_block:
+      value: 1000.0
+      unit: "pairs"
+      reason: "blocks smaller than this are treated as yielding no key"
+    deadline_s:
+      value: 1.0
+      unit: "s"
+      reason: "just-in-time delivery must finish a block within one second"
+    pool_block_cap:
+      value: 10000000000.0
+      unit: "pairs"
+      reason: "largest block a pool accumulates before post-processing"
+    pool_accumulation_s:
+      value: 3600
+      unit: "s"
+      reason: "a pool can accumulate pairs for up to one hour per block"
+  detection:
+    feature_windows_s:
+      value: [5, 15, 60]
+      unit: "s"
+      reason: "rolling-mean windows used as detector features"
+    baseline_window_s:
+      value: 600
+      unit: "s"
+      reason: "rolling-median window used as the slow baseline"
+    correlation_windows_s:
+      value: [15, 60]
+      unit: "s"
+      reason: "windows for the error-rate versus dark-count correlation feature"
+    correlation_min_periods:
+      value: 3
+      reason: "minimum samples before a rolling correlation is reported"
+    false_alarm:
+      value: 0.01
+      reason: "false-alarm budget at which all detectors are compared"
+    multi_monitor_count:
+      value: 4
+      reason: "the false-alarm budget is split equally across the four monitored quantities"
+    cusum_slack:
+      value: 0.5
+      reason: "conventional CUSUM slack of half a standard deviation"
+    cusum_cap_factor:
+      value: 3
+      reason: "the CUSUM statistic is capped at 3 times its threshold so alarms clear"
+    classifier_max_iter:
+      value: 300
+      reason: "gradient-boosting hyperparameter, not tuned against real data"
+    classifier_learning_rate:
+      value: 0.08
+      reason: "gradient-boosting hyperparameter, not tuned against real data"
+  sweep:
+    qsdc_non_jit_on_time:
+      value: 0.0
+      reason: "keyless transports cannot use stored keys, so they score zero with pooled delivery"
     pqc_fallback_on_time:
       value: 1.0
-      source: "assumption: with a post-quantum fallback a request is always served on time, by construction"
+      reason: "with a post-quantum fallback a request is always served on time, by construction"
 
 simulation:
   transport:
