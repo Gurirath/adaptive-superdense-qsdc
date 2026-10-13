@@ -409,7 +409,7 @@ The smoke test writes to a temporary folder, so running the tests never changes 
 There are two requirement files, for two purposes.
 
 - `requirements.txt` is the flexible install. It gives the lowest version of each package that supports Python 3.11, 3.12 and 3.13, and lets pip choose anything newer. Use it to run or extend the code.
-- `requirements-lock.txt` is the exact install. It pins every package used, and each of their direct dependencies, to the versions that produced the files in `results/`. Use it to reproduce the published figures and numbers exactly. Its versions need Python 3.13.
+- `requirements-lock.txt` is the exact install. It pins every package used, and each of their direct dependencies, to the versions that produced the files in `results/`. Use it to reproduce the published numbers in `results/key_numbers.json` exactly on any operating system. The figures look the same everywhere, but their files match byte for byte only on the same operating system as the published run. Its versions need Python 3.13.
 
 ```bash
 pip install -r requirements-lock.txt
