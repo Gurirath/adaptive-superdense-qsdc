@@ -53,7 +53,7 @@ The main packages in the lock file are numpy 2.5.4, scipy 1.18.1, pandas 3.0.6, 
    git diff --stat results
    ```
 
-   If nothing is listed, every figure, CSV file and number was reproduced byte for byte.
+   On the same operating system as the published run, nothing is listed, which means every figure, CSV file and number was reproduced byte for byte. On a different operating system, `results/key_numbers.json` and `results/qiskit_validation.json` should still match exactly, values in the CSV files may differ in the last floating-point digit, and the PNG files will differ in bytes even though the plots look the same.
 
 6. Run the tests.
 

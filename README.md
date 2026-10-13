@@ -416,7 +416,7 @@ pip install -r requirements-lock.txt
 python run_all.py
 ```
 
-The published results were produced with Python 3.13.11 on Windows 11 and the versions in `requirements-lock.txt`. In that environment a second run reproduces every figure, CSV file and number byte for byte, because all random seeds are fixed in `config.yaml`.
+The published results were produced with Python 3.13.11 on Windows 11 and the versions in `requirements-lock.txt`. In that environment a second run reproduces every figure, CSV file and number byte for byte, because all random seeds are fixed in `config.yaml`. On a different operating system with the same package versions, `results/key_numbers.json` and `results/qiskit_validation.json` should still match exactly, values in the CSV files may differ in the last floating-point digit, and the PNG files will differ in bytes even though the plots look the same.
 
 With other versions the results stay the same to the precision quoted in this README, but can differ in later digits. The attack-detection recalls are the most sensitive: they changed by up to 0.006 between two sets of library versions. The test suite passes with both the lowest versions in `requirements.txt` and the versions in `requirements-lock.txt`, on Python 3.13.
 
