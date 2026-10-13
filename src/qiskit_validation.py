@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from scipy.stats import norm
 from config import CFG
 from core import werner_weights, qber_from_weights, chsh_from_weights
 from transports import compose
@@ -117,6 +118,10 @@ def row(F, quantity, analytic, measured, se):
 
 def binomial_se(p, n):
     return np.sqrt(max(p * (1 - p), 0.0) / n)
+
+
+def bonferroni_bound(n_comparisons, family_wise_error_rate=V["family_wise_error_rate"]):
+    return float(norm.ppf(1 - family_wise_error_rate / (2 * n_comparisons)))
 
 
 def validate(fidelities=V["fidelities"], shots=V["shots"], return_noise=V["return_noise"], seed=V["seed"]):

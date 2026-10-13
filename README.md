@@ -88,7 +88,7 @@ A `source` is one of two things:
 - A published reference with authors, year, title and a DOI or arXiv number. Each one was checked against its DOI or arXiv record and against the paper's abstract or full text. Where the paper supports a value without stating it exactly, the `note` says so.
 - The word `assumption` followed by a one-line reason. This covers design choices, modelled quantities and anything for which no reference could be verified.
 
-The file has 62 physics parameters, 37 design choices and 95 simulation settings. Eight physics parameters carry a published reference:
+The file has 62 physics parameters, 37 design choices and 96 simulation settings. Eight physics parameters carry a published reference:
 
 | Parameter | Value | Reference |
 | --- | --- | --- |
@@ -181,7 +181,9 @@ Each circuit is run for 20000 shots, for F = 1.0, 0.98, 0.95 and 0.90. The compa
 | Error rate in the Z basis and in the X basis | `qber_from_weights()` in `src/core.py` |
 | CHSH value S | `chsh_from_weights()` in `src/core.py` |
 
-That is 28 comparisons. All agree within 3 standard errors, and the largest difference is 1.6 standard errors. The standard error is the sampling error expected from the analytic value and the number of shots. The numbers are in `results/qiskit_validation.json` and plotted in `fig18_qiskit_validation.png`.
+That is 28 comparisons. All agree within 3 standard errors, and the largest difference is 1.6 standard errors. The standard error is the sampling error expected from the analytic value and the number of shots. The numbers are in `results/qiskit_validation.json` and plotted in `fig18_qiskit_validation.png`, whose error bars show 3 standard errors.
+
+The automated test uses a slightly wider bound, for a statistical reason. With 28 comparisons, each held to 3 standard errors, there is about a 7% chance that at least one fails through sampling noise alone, even when the two calculations agree perfectly. The test therefore applies a Bonferroni correction: it fixes the chance of any false failure across all comparisons at 1%, and divides that between them. The bound for each comparison is z = norm.ppf(1 − 0.01 / (2n)), where n is the number of comparisons and the factor of 2 covers deviations in either direction. For n = 28 this gives 3.57 standard errors. The bound is computed from n, so it adjusts if fidelities or quantities are added, and the 1% rate is set in `config.yaml`.
 
 `python run_all.py` produces fig18 with the other figures. If Qiskit is not installed, it prints a message and skips fig18; everything else still runs.
 
@@ -215,7 +217,7 @@ It takes about a minute, nearly all of it the last test in the table.
 | `test_superdense.py` | Superdense coding gives exactly twice the key-mode rate per pair on a noiseless return leg, for fidelities from 0.82 to 1. Eve's Holevo information, whether she only listens or intercepts the encoded qubit, never exceeds the pair entropy H(p). A linear-optics Bell measurement carries at most log2(3) bits. |
 | `test_switching.py` | The switching threshold is 0.5 in dimensions 2, 3, 4, 8 and 16, and about 0.533 with 2% noise on the return leg. |
 | `test_delivery.py` | Just-in-time on-time delivery over h hops matches (300/330)^h for every path length in fig07. |
-| `test_qiskit_validation.py` | Every Qiskit measurement agrees with its analytic value within 3 standard errors. Skipped if Qiskit is not installed. |
+| `test_qiskit_validation.py` | Every Qiskit measurement agrees with its analytic value within a Bonferroni-corrected bound, about 3.6 standard errors for 28 comparisons. Skipped if Qiskit is not installed. |
 | `test_smoke.py` | `python run_all.py --fast` finishes without errors and writes every figure and the numbers file. |
 
 Three points about how the tests are built:
@@ -226,7 +228,7 @@ Three points about how the tests are built:
 
 The smoke test writes to a temporary folder, so running the tests never changes `results/`.
 
-`.github/workflows/tests.yml` runs the same tests on every push, on Python 3.10, 3.11 and 3.12.
+`.github/workflows/tests.yml` runs the same tests on every push, on Python 3.11, 3.12 and 3.13.
 
 ## Code layout
 
