@@ -469,11 +469,12 @@ If you use this code or its results, please cite the paper:
   author = {Khurana, Gurirath Singh and Agrawal, Mohit},
   title  = {{Adaptive Superdense Coding with Outage-Resilient Key Pools for Secure One-to-One and One-to-Many Quantum Communication}},
   year   = {2026},
-  note   = {Simulation code, version 1.0.0}
+  note   = {Simulation code, version 1.0.0},
+  url    = {https://github.com/Gurirath/adaptive-superdense-qsdc}
 }
 ```
 
-`CITATION.cff` holds the same information in a form that GitHub and reference managers can read.
+The code is at <https://github.com/Gurirath/adaptive-superdense-qsdc>. `CITATION.cff` holds the same information in a form that GitHub and reference managers can read.
 
 ## License
 

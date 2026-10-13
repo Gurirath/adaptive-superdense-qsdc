@@ -19,8 +19,8 @@ The main packages in the lock file are numpy 2.5.4, scipy 1.18.1, pandas 3.0.6, 
 1. Get the code and move into its folder.
 
    ```bash
-   git clone <repository-url>
-   cd <repository-folder>
+   git clone https://github.com/Gurirath/adaptive-superdense-qsdc.git
+   cd adaptive-superdense-qsdc
    ```
 
 2. Create a virtual environment with Python 3.13 and activate it.
