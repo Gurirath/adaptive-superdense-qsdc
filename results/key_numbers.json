@@ -105,24 +105,24 @@
   },
   "detection": {
     "static_qber_threshold": {
-      "intercept_resend_recall": 0.707,
+      "intercept_resend_recall": 0.701,
       "detector_blinding_recall": 0.0,
-      "trojan_horse_recall": 0.055,
-      "overall_recall": 0.274,
+      "trojan_horse_recall": 0.059,
+      "overall_recall": 0.273,
       "false_alarm": 0.012
     },
     "multi_monitor_thresholds": {
-      "intercept_resend_recall": 0.61,
+      "intercept_resend_recall": 0.612,
       "detector_blinding_recall": 1.0,
-      "trojan_horse_recall": 0.661,
+      "trojan_horse_recall": 0.659,
       "overall_recall": 0.734,
       "false_alarm": 0.008
     },
     "ml_gradient_boosting": {
       "intercept_resend_recall": 1.0,
       "detector_blinding_recall": 1.0,
-      "trojan_horse_recall": 0.976,
-      "overall_recall": 0.991,
+      "trojan_horse_recall": 0.978,
+      "overall_recall": 0.992,
       "false_alarm": 0.01
     }
   },
