@@ -76,13 +76,7 @@ physics:
     key_per_swapped_pair:
       value: 0.8
       unit: "secure bits per pair"
-      source: "assumption: secure key fraction per end-to-end swapped pair, a flat value rather than a computed one"
-    swap_memory_coeff:
-      value: 0.5
-      source: "assumption: heuristic coefficient in the memory-assisted swapping overhead 1 + coeff * factor * log2(hops)"
-    swap_memory_factor:
-      value: 2
-      source: "assumption: heuristic factor in the memory-assisted swapping overhead 1 + coeff * factor * log2(hops)"
+      source: "assumption: secure key fraction per end-to-end swapped pair without memories, a flat value rather than a computed one"
   multicast:
     key_frac_ghz:
       value: 0.8
@@ -97,9 +91,6 @@ physics:
       unit: "Hz"
       source: "assumption: clock rate of the pair-source-based GHZ scheme, kept as its own parameter because the original code did not tie it to link.clock_hz"
   finite_key:
-    epsilon:
-      value: 1.0e-10
-      source: "assumption: overall security parameter, a commonly used order of magnitude"
     aep_coefficient:
       value: 7
       source: "Scarani, V., Renner, R. (2008). Quantum Cryptography with Finite Resources: Unconditional Security Bound for Discrete-Variable Protocols with One-Way Postprocessing. Physical Review Letters 100, 200501. DOI 10.1103/PhysRevLett.100.200501"
@@ -351,6 +342,9 @@ design:
       unit: "s"
       reason: "default per-receiver pool depth in seconds of demand"
   finite_key:
+    epsilon:
+      value: 1.0e-10
+      reason: "conventional finite-key security target, chosen not measured"
     pe_fraction:
       value: 0.1
       reason: "fraction of each block sacrificed for parameter estimation"
@@ -542,3 +536,18 @@ simulation:
     multicast_rate_receivers: [2, 3, 4, 6, 8, 12, 16, 24, 32]
     scheduling_margins: [1.05, 1.2, 1.5]
     round_trip_bounds: [0.6, 0.75]
+
+formulas:
+  swap_waiting_time:
+    expression: "expected attempts until all h links hold a pair = H_h / p, with H_h = 1 + 1/2 + ... + 1/h"
+    source: "Sangouard, N., Simon, C., de Riedmatten, H., Gisin, N. (2011). Quantum repeaters based on atomic ensembles and linear optics. Reviews of Modern Physics 83, 33-80. DOI 10.1103/RevModPhys.83.33"
+    note: "The review gives the prefactor 3/2 for two links and 25/12 for four links, each valid for small success probability. These equal H_2 and H_4. The review does not write out the general harmonic-number form; it is the same small-probability result for h links."
+  swap_memory_decoherence:
+    expression: "depolarising probability of a stored pair q_m = 1 - exp(-t_wait / T2)"
+    source: "assumption: exponential loss of coherence with the memory time T2, applied to every link pair for the full waiting time, which overstates the storage time of the pairs created last; not applied at one hop, where nothing is stored"
+  swap_memory_readout:
+    expression: "end-to-end pair rate is multiplied by eta_mem^(2 (h - 1))"
+    source: "assumption: each of the h - 1 intermediate nodes reads out two stored halves for its swap, each with the memory efficiency eta_mem; no factor at one hop"
+  swap_fidelity:
+    expression: "Werner parameter of the end-to-end pair = product of the Werner parameters of the h stored link pairs, where the Werner parameter is (4F - 1) / 3"
+    source: "assumption: every link pair is a Werner state and each swap is a perfect Bell measurement that succeeds with probability bsm_eff"

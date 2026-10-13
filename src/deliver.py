@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from transports import Link, rates_at, eta_fiber
+from core import werner_weights, key_rate_tomographic
+from transports import Link, rates_at, eta_fiber, leg_qber, werner_from_qber
 from config import CFG
 
 D = CFG["delivery"]
@@ -23,14 +24,32 @@ def hop_rate(L, lk):
     return rates_at(L, lk, "tomographic", "direct")["key_mode"]
 
 
+def harmonic(n):
+    return sum(1 / k for k in range(1, n + 1))
+
+
+def swap_memory_model(hops, L, lk):
+    eta = eta_fiber(L, lk)
+    p = lk.mu * eta * lk.eta_det
+    attempts = harmonic(hops) / p
+    t_wait = attempts / lk.clock_hz
+    q_m = 1 - np.exp(-t_wait / lk.t2_mem_s) if hops > 1 else 0.0
+    f_link = werner_from_qber(leg_qber(eta, lk))[0]
+    w = ((4 * f_link - 1) / 3 * (1 - q_m)) ** hops
+    fidelity = (3 * w + 1) / 4
+    secret_fraction = key_rate_tomographic(werner_weights(fidelity))
+    readout = lk.eta_mem ** (2 * (hops - 1))
+    pair_rate = lk.clock_hz / attempts * lk.bsm_eff ** (hops - 1) * readout
+    return {"p_link": p, "attempts": attempts, "t_wait_s": t_wait, "q_mem": q_m, "fidelity": fidelity, "secret_fraction": secret_fraction, "readout": readout, "pair_rate": pair_rate, "key_rate": pair_rate * secret_fraction}
+
+
 def swap_rate(hops, L, lk, memory=False):
+    if memory:
+        return swap_memory_model(hops, L, lk)["key_rate"]
     eta = eta_fiber(L, lk) * lk.eta_det
     pairs = lk.clock_hz * lk.mu
     key_pp = D["key_per_swapped_pair"]
-    if not memory:
-        return pairs * eta ** hops * (lk.bsm_eff ** (hops - 1)) * key_pp
-    link = pairs * eta
-    return link * (lk.bsm_eff ** (hops - 1)) * key_pp / (1 + D["swap_memory_coeff"] * np.log2(max(hops, 1)) * D["swap_memory_factor"])
+    return pairs * eta ** hops * (lk.bsm_eff ** (hops - 1)) * key_pp
 
 
 def simulate_path(hops, strategy, T=D["duration_s"], L=D["hop_length_km"], demand=D["demand_bps"], deadline=D["deadline_s"], pool_cap=D["pool_cap_bits"], seed=D["seed"], lk=None, paths=D["paths"], k_of_n=D["k_of_n"], avail=(O["mean_up_s"], O["mean_down_s"])):

@@ -57,6 +57,8 @@ The file has three top-level sections:
 - `design` holds choices about how the system is built or analysed: buffer and pool depths, demand and load levels, pool capacities, the multipath 2-of-3 choice, the detector's feature windows and classifier settings, the false-alarm budget. Every entry gives a short reason. These are not claims that need evidence; a different designer could pick differently.
 - `simulation` holds how the model is run and plotted: seeds, durations, grids, numerical tolerances and the cases each figure shows. These are plain values with no source or reason.
 
+A fourth section, `formulas`, holds no numbers. It records where the approximations in the swapping model come from, each with an `expression` and a `source`.
+
 A `physics` entry has a `value` and a `source`, and may have a `unit` and a `note`. A `design` entry has a `value` and a `reason`, and may have a `unit`. A `simulation` entry is just a value:
 
 ```yaml
@@ -85,7 +87,7 @@ A `source` is one of two things:
 - A published reference with authors, year, title and a DOI or arXiv number. Each one was checked against its DOI or arXiv record and against the paper's abstract or full text. Where the paper supports a value without stating it exactly, the `note` says so.
 - The word `assumption` followed by a one-line reason. This covers design choices, modelled quantities and anything for which no reference could be verified.
 
-The file has 65 physics parameters, 36 design choices and 90 simulation settings. Eight physics parameters carry a published reference:
+The file has 62 physics parameters, 37 design choices and 90 simulation settings. Eight physics parameters carry a published reference:
 
 | Parameter | Value | Reference |
 | --- | --- | --- |
@@ -98,7 +100,7 @@ The file has 65 physics parameters, 36 design choices and 90 simulation settings
 | Finite-key correction coefficient | 7 | Scarani and Renner 2008, Phys. Rev. Lett. 100, 200501 |
 | Error-correction efficiency | 1.16 | Lim et al. 2014, Phys. Rev. A 89, 022307 |
 
-The other 57 physics parameters are assumptions and are labelled as such. Most of them are the modelled telemetry and attack signatures and the judgement scores of the design-space sweep.
+The other 54 physics parameters are assumptions and are labelled as such. Most of them are the modelled telemetry and attack signatures and the judgement scores of the design-space sweep.
 
 Three of the references support a value without measuring it. For the detector and memory efficiencies the papers show the value is achievable but do not state that exact number. For the dark-count probability the paper uses 1e-8 as an illustrative value with no experimental basis. The notes in `config.yaml` say so in each case.
 
@@ -124,7 +126,38 @@ To try a different value, edit it in `config.yaml` and re-run. Write numbers wit
 
 Mathematical constants stay in the code because they are part of the formulas, not choices: the factor of 10 in decibel conversion, the Werner-state and depolarising-channel coefficients, 0.5 as the largest possible error rate, and array dimensions. Plot styling in `src/figures.py` (figure sizes, colours, label positions) also stays in the code.
 
-Moving the parameters into `config.yaml` did not change any result. Computing the sweep's on-time figures at run time changed only the on-time column of `results/data/design_space_sweep.csv` and the shading in fig17; `results/key_numbers.json` and every other figure and CSV file are byte-for-byte the same as before.
+Moving the parameters into `config.yaml` did not change any result. Two later changes to the model did, and only where expected:
+
+- Computing the sweep's on-time figures at run time changed the on-time column of `results/data/design_space_sweep.csv` and the shading in fig17.
+- The swapping model described below changed the on-time delivery of end-to-end swapping with a pool, which appears in fig07, `results/data/on_time_vs_hops.csv`, `results/key_numbers.json` and the sweep.
+
+Every other figure, CSV file and number is byte-for-byte the same as before.
+
+## Entanglement swapping with memories
+
+`swap_memory_model` in `src/deliver.py` gives the key rate of a path of h links joined by entanglement swapping when every node has a quantum memory. It is used by two delivery strategies: just-in-time swapping with memory, and end-to-end swapping that fills a key pool.
+
+Each link creates pairs independently, succeeding on each clock cycle with probability p = mu × link transmission × detector efficiency. With memories, a link that succeeds holds its pair until all h links have one, and only then are the swaps done. The expected number of attempts until all h links have succeeded is taken as H_h / p, where H_h = 1 + 1/2 + ... + 1/h is the h-th harmonic number. This approximation is valid when p is small. Sangouard et al. 2011 (Rev. Mod. Phys. 83, 33) give the two cases H_2 = 3/2 and H_4 = 25/12 explicitly; the general form for h links is the same result and is not written out in that review.
+
+Three effects then reduce the rate:
+
+- Memory decoherence. While waiting, a stored pair is depolarised with probability q_m = 1 − exp(−t_wait / T2), where t_wait is the waiting time and T2 the memory coherence time. This is applied to every link pair for the full wait, which overstates the loss for the pairs created last. At one hop nothing is stored, so there is no decoherence.
+- Swapping. Each of the h − 1 swaps succeeds with the Bell-measurement efficiency. Every link pair is treated as a Werner state, and the end-to-end pair's Werner parameter is the product of the link pairs' parameters, so fidelity falls with every hop.
+- Memory readout. Each intermediate node reads out two stored halves for its swap, so the rate is multiplied by the memory efficiency to the power 2(h − 1). There is no factor at one hop.
+
+The end-to-end fidelity is turned into a secret fraction with the tomographic key-rate function in `src/core.py`, the same one used for the per-hop key rate. Swapping without memory keeps its flat key fraction of 0.8 per pair.
+
+The finding is that the memory's coherence time is not what limits swapping here. With T2 = 10 ms and 25 km hops, the wait is about 1 microsecond, so decoherence is of order 1e-4 and has no visible effect. The rate at 25 km per hop is:
+
+| Hops | With memory (bits/s) | Without memory (bits/s) | Meets 256 kbit/s demand |
+| --- | --- | --- | --- |
+| 1 | 2,321,901 | 2,150,349 | both |
+| 2 | 551,157 | 289,000 | both |
+| 3 | 160,720 | 38,841 | neither |
+| 4 | 50,229 | 5,220 | neither |
+| 10 | 54 | 0.03 | neither |
+
+Memories raise the rate at every path length, by about 10 times at 4 hops, but just-in-time delivery only asks whether the rate meets the demand. Both versions meet it at 1 and 2 hops and miss it from 3 hops on, so their on-time results are identical. The rate is limited by link loss, Bell-measurement success and memory readout loss, not by memory decoherence.
 
 ## Code layout
 

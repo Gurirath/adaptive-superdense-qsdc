@@ -40,6 +40,9 @@ def load(path=PATH):
     with open(path, encoding="utf-8") as fh:
         raw = yaml.safe_load(fh)
     _check(raw["simulation"], "simulation")
+    for name, formula in raw.get("formulas", {}).items():
+        if not str(formula.get("source", "")).strip():
+            raise ValueError(f"formulas.{name}: missing source")
     merged = _merge(_values(raw["physics"], "source", "physics"), _values(raw["design"], "reason", "design"))
     return _merge(merged, raw["simulation"])
 
