@@ -1,0 +1,292 @@
+{
+  "switch_point_km": 6.0,
+  "rate_at_10km": {
+    "key_mode": 3937976.7987472103,
+    "sdc_two_step": 3124194.825105983,
+    "adaptive": 3937976.7987472103,
+    "dl04": 2062548.5285844367
+  },
+  "rate_at_50km": {
+    "key_mode": 624047.1311004765,
+    "sdc_two_step": 70951.5230083374,
+    "adaptive": 624047.1311004765,
+    "dl04": 51793.136656174596
+  },
+  "figures": [
+    {
+      "file": "fig01_rate_vs_distance.png",
+      "caption": "Secure rate vs distance; superdense direct only wins below the switch point; ping-pong never secure"
+    },
+    {
+      "file": "fig02_superdense_security.png",
+      "caption": "Density-matrix result: superdense gives exactly 2x key mode per verified pair; Eve's information bounded by pair entropy H(p)"
+    },
+    {
+      "file": "fig03_switch_rule.png",
+      "caption": "Closed-form switching rule eta* = (1-H)/(2-H(p.q)-H) = 1/2 for any fidelity and any qudit dimension"
+    },
+    {
+      "file": "fig04_crossover_sensitivity.png",
+      "caption": "Where superdense direct beats key mode, by memory quality; linear-optics Bell measurement never wins"
+    },
+    {
+      "file": "fig05_attack_timeseries.png",
+      "caption": "Time series of QBER, dark counts and back-reflection with three attack types; static threshold misses blinding and Trojan attacks, ML catches them"
+    },
+    {
+      "file": "fig06_detection_comparison.png",
+      "caption": "Recall per attack type at a 1% false-alarm budget (synthetic telemetry, modelled signatures)"
+    },
+    {
+      "file": "fig07_on_time_vs_hops.png",
+      "caption": "On-time key delivery collapses as 0.909^hops without buffering; per-hop key pools hold ~100% (supply 10x demand here; fig09 tests tight load)"
+    },
+    {
+      "file": "fig08_pool_timeseries.png",
+      "caption": "Pools drain during outages and refill after, so requests keep being served while just-in-time delivery fails whenever any hop is down"
+    },
+    {
+      "file": "fig09_pool_sizing.png",
+      "caption": "Pool size needed for on-time delivery: about 4x the mean outage reaches 94-98% even at 8 hops and 95% load"
+    },
+    {
+      "file": "fig10_multicast_on_time.png",
+      "caption": "Multicast: just-in-time falls as 0.909^N; GHZ dies past N=4; per-receiver pools stay at 94-99%"
+    },
+    {
+      "file": "fig11_ghz_vs_bipartite.png",
+      "caption": "GHZ conference keys only beat bipartite keys (max ~1.8x) behind a bottleneck with receivers within ~2 km and N<=8"
+    },
+    {
+      "file": "fig12_hybrid_bars.png",
+      "caption": "Hybrid keeps 99.6% on-time like pools while 92% of traffic is sent keyless; trade-off: stored keys age longer"
+    },
+    {
+      "file": "fig13_hybrid_timeseries.png",
+      "caption": "Hybrid: messages go keyless by QSDC while the link is up; the pool only covers outages"
+    },
+    {
+      "file": "fig14_finite_key.png",
+      "caption": "Pools allow large blocks: 1.8x more key at 100 km and key at 150-200 km where 1 s blocks give zero"
+    },
+    {
+      "file": "fig15_memory_needed.png",
+      "caption": "Buffering entanglement through 30-120 s outages needs T2 of ~1000 s or more; classical pools have no such limit"
+    },
+    {
+      "file": "fig16_scheduling.png",
+      "caption": "Growing buffer 10->120 s lifts on-time 40%->97%; adding 45% more source capacity changes it by ~2 points"
+    },
+    {
+      "file": "fig17_design_space.png",
+      "caption": "Every combination of distribution x certification x monitoring x transport x authentication x delivery, scored"
+    }
+  ],
+  "F095": {
+    "eve_bits": 0.3656450821520142,
+    "sdc_secure": 1.2687098356959716,
+    "key_secure": 0.6343549178479858
+  },
+  "switch_threshold_by_dimension": {
+    "2": 0.5,
+    "3": 0.5,
+    "4": 0.5,
+    "8": 0.5,
+    "16": 0.5
+  },
+  "switch_threshold_with_2pct_return_noise": 0.5331634710662887,
+  "crossover_km": {
+    "memory T2=0.001s": 0.0,
+    "memory T2=0.01s": 6.0,
+    "memory T2=0.1s": 11.0,
+    "memory T2=1s": 12.0,
+    "perfect memory": 14.0,
+    "linear-optics Bell meas.": 0.0
+  },
+  "detection": {
+    "static_qber_threshold": {
+      "intercept_resend_recall": 0.707,
+      "detector_blinding_recall": 0.0,
+      "trojan_horse_recall": 0.055,
+      "overall_recall": 0.274,
+      "false_alarm": 0.012
+    },
+    "multi_monitor_thresholds": {
+      "intercept_resend_recall": 0.61,
+      "detector_blinding_recall": 1.0,
+      "trojan_horse_recall": 0.661,
+      "overall_recall": 0.734,
+      "false_alarm": 0.008
+    },
+    "ml_gradient_boosting": {
+      "intercept_resend_recall": 1.0,
+      "detector_blinding_recall": 1.0,
+      "trojan_horse_recall": 0.976,
+      "overall_recall": 0.991,
+      "false_alarm": 0.01
+    }
+  },
+  "on_time_vs_hops": {
+    "jit_swap_memory": {
+      "1": 0.9057,
+      "2": 0.8302,
+      "3": 0.0,
+      "4": 0.0,
+      "6": 0.0,
+      "8": 0.0,
+      "10": 0.0
+    },
+    "jit_swap_no_memory": {
+      "1": 0.9057,
+      "2": 0.8302,
+      "3": 0.0,
+      "4": 0.0,
+      "6": 0.0,
+      "8": 0.0,
+      "10": 0.0
+    },
+    "jit_trusted_relay": {
+      "1": 0.9057,
+      "2": 0.8302,
+      "3": 0.7536,
+      "4": 0.6744,
+      "6": 0.5532,
+      "8": 0.4553,
+      "10": 0.3788
+    },
+    "multipath_jit_k_of_n": {
+      "1": 0.9717,
+      "2": 0.9127,
+      "3": 0.8385,
+      "4": 0.7461,
+      "6": 0.5872,
+      "8": 0.4301,
+      "10": 0.3172
+    },
+    "multipath_pool_k_of_n": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 1.0,
+      "6": 1.0,
+      "8": 1.0,
+      "10": 1.0
+    },
+    "pool_end_to_end_swap": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 0.617,
+      "4": 0.2409,
+      "6": 0.0454,
+      "8": 0.0123,
+      "10": 0.0063
+    },
+    "pool_trusted_relay": {
+      "1": 1.0,
+      "2": 1.0,
+      "3": 1.0,
+      "4": 1.0,
+      "6": 1.0,
+      "8": 1.0,
+      "10": 1.0
+    }
+  },
+  "pool_timeseries_misses": {
+    "jit": 0.395,
+    "pool": 0.002777777777777778
+  },
+  "multicast_on_time": {
+    "bipartite_jit": {
+      "2": 0.8383,
+      "4": 0.7063,
+      "8": 0.4689,
+      "16": 0.2214,
+      "32": 0.0458
+    },
+    "ghz_jit": {
+      "2": 0.8383,
+      "4": 0.7063,
+      "8": 0.0,
+      "16": 0.0,
+      "32": 0.0
+    },
+    "bipartite_pools": {
+      "2": 0.9972,
+      "4": 0.995,
+      "8": 0.9848,
+      "16": 0.9714,
+      "32": 0.944
+    },
+    "bipartite_pools_receiver_fraction": {
+      "2": 0.9986,
+      "4": 0.9987,
+      "8": 0.998,
+      "16": 0.9981,
+      "32": 0.998
+    }
+  },
+  "hybrid_1km": {
+    "key_pool": {
+      "on_time": 0.996,
+      "keyless_frac": 0.0,
+      "mean_key_at_rest_s": 108.273,
+      "mean_key_age_s": 86.334
+    },
+    "qsdc_only": {
+      "on_time": 0.916,
+      "keyless_frac": 1.0,
+      "mean_key_at_rest_s": 0.0,
+      "mean_key_age_s": 0.0
+    },
+    "hybrid": {
+      "on_time": 0.996,
+      "keyless_frac": 0.92,
+      "mean_key_at_rest_s": 111.956,
+      "mean_key_age_s": 203.843
+    }
+  },
+  "hybrid_capacity_gain": {
+    "1.0": 1.204,
+    "3.0": 1.103,
+    "5.0": 1.01
+  },
+  "finite_key": [
+    {
+      "L": 10,
+      "jit": 3173550.9,
+      "pool": 3382014.3,
+      "asym": 3763000.1
+    },
+    {
+      "L": 50,
+      "jit": 454732.7,
+      "pool": 535210.5,
+      "asym": 596295.0
+    },
+    {
+      "L": 100,
+      "jit": 29732.8,
+      "pool": 53112.0,
+      "asym": 59522.3
+    },
+    {
+      "L": 150,
+      "jit": 0.0,
+      "pool": 5120.1,
+      "asym": 5846.6
+    },
+    {
+      "L": 200,
+      "jit": 0.0,
+      "pool": 401.3,
+      "asym": 490.8
+    },
+    {
+      "L": 250,
+      "jit": 0.0,
+      "pool": 0.0,
+      "asym": 0.0
+    }
+  ],
+  "sweep_size": 804
+}

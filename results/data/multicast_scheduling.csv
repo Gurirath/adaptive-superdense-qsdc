@@ -1,0 +1,17 @@
+buffer_s,margin,sched,on_time
+10,1.05,equal_up,0.39437500000000003
+10,1.05,lowest_pool_first,0.403225
+10,1.5,equal_up,0.399325
+10,1.5,lowest_pool_first,0.40327500000000005
+30,1.05,equal_up,0.611675
+30,1.05,lowest_pool_first,0.64465
+30,1.5,equal_up,0.629625
+30,1.5,lowest_pool_first,0.6459250000000001
+60,1.05,equal_up,0.780575
+60,1.05,lowest_pool_first,0.831525
+60,1.5,equal_up,0.81055
+60,1.5,lowest_pool_first,0.83345
+120,1.05,equal_up,0.9271
+120,1.05,lowest_pool_first,0.9672000000000001
+120,1.5,equal_up,0.9556
+120,1.5,lowest_pool_first,0.967375
