@@ -1,4 +1,4 @@
-# Secure Quantum Communication via Entanglement-Based Key Sharing and Superdense Coding
+# Secure quantum communication with entanglement-based key sharing and superdense coding
 
 Gurirath Singh Khurana · simulation study · October 2026
 

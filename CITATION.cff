@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it as below."
+type: software
+title: "Adaptive Superdense Coding with Outage-Resilient Key Pools for Secure One-to-One and One-to-Many Quantum Communication"
+abstract: "Simulation code for a study of entanglement-based key distribution and superdense coding on the same verified pairs: a density-matrix model of both modes, a fibre link model, telemetry-based attack detection, multi-hop and one-to-many delivery with key pools, a hybrid protocol, and a design-space sweep."
+authors:
+  - family-names: Khurana
+    given-names: Gurirath Singh
+    affiliation: "Vellore Institute of Technology"
+  - family-names: Agrawal
+    given-names: Mohit
+    affiliation: "Vellore Institute of Technology"
+version: 1.0.0
+date-released: 2026-10-14
+license: MIT
+keywords:
+  - quantum secure direct communication
+  - superdense coding
+  - quantum key distribution
+  - quantum networks
+  - key management
+  - multicast
+  - eavesdropping detection
