@@ -1,6 +1,6 @@
 # Secure quantum communication: key sharing + superdense coding simulations
 
-One command runs every simulation and saves 17 figures plus all numbers.
+One command runs every simulation and saves 18 figures plus all numbers.
 
 ## Run it
 
@@ -11,7 +11,7 @@ python run_all.py
 
 Takes about 1–3 minutes on a laptop. Everything lands in `results/`:
 
-- `results/fig01…fig17_*.png` — the figures (200 dpi, ready for screenshots or slides)
+- `results/fig01…fig18_*.png` — the figures (200 dpi, ready for screenshots or slides)
 - `results/key_numbers.json` — every headline number, plus a caption for each figure
 - `results/data/*.csv` — the raw data behind each figure
 
@@ -19,7 +19,7 @@ Options:
 
 ```bash
 python run_all.py --fast          # shorter simulations, about half the time
-python run_all.py --only fig05    # regenerate just one figure (names: fig01 … fig17)
+python run_all.py --only fig05    # regenerate just one figure (names: fig01 … fig18)
 python run_all.py --out my_folder # save somewhere else
 ```
 
@@ -46,6 +46,7 @@ A pre-generated copy of all results is already included in `results/`, in case y
 | fig15_memory_needed | analytical | Quantum memory needed for QSDC to survive outages (~1000 s) |
 | fig16_scheduling | analytical | Multicast: buffer depth matters, source capacity barely does |
 | fig17_design_space | scatter | All 804 combinations: security vs rate vs on-time |
+| fig18_qiskit_validation | validation | Qiskit circuit simulation vs the analytic model: decoding errors, error rates and CHSH value |
 
 ## Parameters and their sources
 
@@ -87,7 +88,7 @@ A `source` is one of two things:
 - A published reference with authors, year, title and a DOI or arXiv number. Each one was checked against its DOI or arXiv record and against the paper's abstract or full text. Where the paper supports a value without stating it exactly, the `note` says so.
 - The word `assumption` followed by a one-line reason. This covers design choices, modelled quantities and anything for which no reference could be verified.
 
-The file has 62 physics parameters, 37 design choices and 90 simulation settings. Eight physics parameters carry a published reference:
+The file has 62 physics parameters, 37 design choices and 95 simulation settings. Eight physics parameters carry a published reference:
 
 | Parameter | Value | Reference |
 | --- | --- | --- |
@@ -159,6 +160,45 @@ The finding is that the memory's coherence time is not what limits swapping here
 
 Memories raise the rate at every path length, by about 10 times at 4 hops, but just-in-time delivery only asks whether the rate meets the demand. Both versions meet it at 1 and 2 hops and miss it from 3 hops on, so their on-time results are identical. The rate is limited by link loss, Bell-measurement success and memory readout loss, not by memory decoherence.
 
+## Independent check with Qiskit
+
+The core results come from our own density-matrix code in `src/core.py` and `src/transports.py`. `src/qiskit_validation.py` checks three of them a second way, by building the protocol as quantum circuits and running them on Qiskit's Aer simulator. The two calculations share no code beyond the final comparison.
+
+The circuits are:
+
+- The Bell pair |Φ+>, made with a Hadamard gate and a controlled-NOT.
+- Superdense coding: Alice applies one of four Pauli operations to her half, and Bob decodes with a Bell measurement (controlled-NOT, Hadamard, then measure both qubits). All four encodings are run.
+- Error rates: both halves of the pair are measured in the Z basis, then in the X basis.
+- A Bell test: the four standard CHSH measurement settings, at angles 0 and 90 degrees for Alice and plus and minus 45 degrees for Bob.
+
+Noise is added with a depolarizing noise model. A Werner pair of fidelity F is a perfect pair with one half depolarized with strength 4(1 − F)/3, so that is applied to Bob's half. For superdense coding, the encoded qubit is also depolarized with the return-leg noise set in `config.yaml` (2%). Every other gate is ideal.
+
+Each circuit is run for 20000 shots, for F = 1.0, 0.98, 0.95 and 0.90. The comparisons are:
+
+| Qiskit measurement | Compared with |
+| --- | --- |
+| How often Bob decodes with no error, a bit flip, a phase flip, or both | `compose()` in `src/transports.py` |
+| Error rate in the Z basis and in the X basis | `qber_from_weights()` in `src/core.py` |
+| CHSH value S | `chsh_from_weights()` in `src/core.py` |
+
+That is 28 comparisons. All agree within 3 standard errors, and the largest difference is 1.6 standard errors. The standard error is the sampling error expected from the analytic value and the number of shots. The numbers are in `results/qiskit_validation.json` and plotted in `fig18_qiskit_validation.png`.
+
+`python run_all.py` produces fig18 with the other figures. If Qiskit is not installed, it prints a message and skips fig18; everything else still runs.
+
+This check covers the pair state, the encoding and decoding, and the Bell test. It does not cover the security bounds, the fibre and rate model, or the network simulations, which have no circuit equivalent here.
+
+### Running on real IBM hardware
+
+`scripts/run_on_ibm_hardware.py` runs the same superdense coding and CHSH circuits on a real IBM Quantum device, without the simulated noise. It is not part of `run_all.py` or the tests, and it has not been run as part of this project.
+
+```bash
+pip install qiskit-ibm-runtime
+export IBM_QUANTUM_TOKEN=your_token
+python scripts/run_on_ibm_hardware.py
+```
+
+On Windows PowerShell, set the token with `$env:IBM_QUANTUM_TOKEN = "your_token"`. The script picks the least busy device unless `--backend` names one, and saves the counts, the decoding success rate and the CHSH value to `results/ibm_hardware.json`. Jobs wait in a queue and use your IBM Quantum allowance.
+
 ## Tests
 
 The `tests/` folder checks the quantitative claims the results rely on. Run it from the project folder:
@@ -175,7 +215,8 @@ It takes about a minute, nearly all of it the last test in the table.
 | `test_superdense.py` | Superdense coding gives exactly twice the key-mode rate per pair on a noiseless return leg, for fidelities from 0.82 to 1. Eve's Holevo information, whether she only listens or intercepts the encoded qubit, never exceeds the pair entropy H(p). A linear-optics Bell measurement carries at most log2(3) bits. |
 | `test_switching.py` | The switching threshold is 0.5 in dimensions 2, 3, 4, 8 and 16, and about 0.533 with 2% noise on the return leg. |
 | `test_delivery.py` | Just-in-time on-time delivery over h hops matches (300/330)^h for every path length in fig07. |
-| `test_smoke.py` | `python run_all.py --fast` finishes without errors and writes all 17 figures and the numbers file. |
+| `test_qiskit_validation.py` | Every Qiskit measurement agrees with its analytic value within 3 standard errors. Skipped if Qiskit is not installed. |
+| `test_smoke.py` | `python run_all.py --fast` finishes without errors and writes every figure and the numbers file. |
 
 Three points about how the tests are built:
 
@@ -203,6 +244,8 @@ The smoke test writes to a temporary folder, so running the tests never changes 
 - `src/extend_net.py` — QSDC + pool hybrid, multicast scheduling
 - `src/extend_theory.py` — finite-key effect, qudit switching threshold
 - `src/sweep.py` — the full design-space sweep
+- `src/qiskit_validation.py` — the independent Qiskit check
+- `scripts/run_on_ibm_hardware.py` — optional run on a real IBM Quantum device
 
 Each `src/*.py` file can also be run on its own (for example `cd src && python transports.py`) to print its raw numbers.
 

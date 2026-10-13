@@ -1,0 +1,236 @@
+{
+  "qiskit_version": "2.5.2",
+  "qiskit_aer_version": "0.17.2",
+  "shots_per_circuit": 20000,
+  "return_noise": 0.02,
+  "seed": 11,
+  "sigma_bound": 3,
+  "largest_abs_z_score": 1.5625465510307173,
+  "all_within_bound": true,
+  "rows": [
+    {
+      "F": 1.0,
+      "quantity": "decode_no_error",
+      "analytic": 0.985,
+      "qiskit": 0.9853,
+      "standard_error": 0.0004297528359417773,
+      "z_score": 0.6980756725957029
+    },
+    {
+      "F": 1.0,
+      "quantity": "decode_bit_flip",
+      "analytic": 0.005,
+      "qiskit": 0.004825,
+      "standard_error": 0.00024937421679075,
+      "z_score": -0.701756589963919
+    },
+    {
+      "F": 1.0,
+      "quantity": "decode_phase_flip",
+      "analytic": 0.005,
+      "qiskit": 0.004925,
+      "standard_error": 0.00024937421679075,
+      "z_score": -0.30075282427025296
+    },
+    {
+      "F": 1.0,
+      "quantity": "decode_bit_and_phase_flip",
+      "analytic": 0.005,
+      "qiskit": 0.00495,
+      "standard_error": 0.00024937421679075,
+      "z_score": -0.200501882846833
+    },
+    {
+      "F": 1.0,
+      "quantity": "qber_z",
+      "analytic": 0.0,
+      "qiskit": 0.0,
+      "standard_error": 0.0,
+      "z_score": 0.0
+    },
+    {
+      "F": 1.0,
+      "quantity": "qber_x",
+      "analytic": 0.0,
+      "qiskit": 0.0,
+      "standard_error": 0.0,
+      "z_score": 0.0
+    },
+    {
+      "F": 1.0,
+      "quantity": "chsh",
+      "analytic": 2.8284271247461903,
+      "qiskit": 2.8292,
+      "standard_error": 0.009999999999999998,
+      "z_score": 0.07728752538098684
+    },
+    {
+      "F": 0.98,
+      "quantity": "decode_no_error",
+      "analytic": 0.9653999999999999,
+      "qiskit": 0.96625,
+      "standard_error": 0.0006461698693068262,
+      "z_score": 1.3154435704530132
+    },
+    {
+      "F": 0.98,
+      "quantity": "decode_bit_flip",
+      "analytic": 0.011533333333333338,
+      "qiskit": 0.0110625,
+      "standard_error": 0.00037749694627168114,
+      "z_score": -1.2472507075447552
+    },
+    {
+      "F": 0.98,
+      "quantity": "decode_phase_flip",
+      "analytic": 0.011533333333333338,
+      "qiskit": 0.01155,
+      "standard_error": 0.00037749694627168114,
+      "z_score": 0.04415046752369359
+    },
+    {
+      "F": 0.98,
+      "quantity": "decode_bit_and_phase_flip",
+      "analytic": 0.011533333333333338,
+      "qiskit": 0.0111375,
+      "standard_error": 0.00037749694627168114,
+      "z_score": -1.0485736036880697
+    },
+    {
+      "F": 0.98,
+      "quantity": "qber_z",
+      "analytic": 0.013333333333333345,
+      "qiskit": 0.0122,
+      "standard_error": 0.000811035004039763,
+      "z_score": -1.3973913920955492
+    },
+    {
+      "F": 0.98,
+      "quantity": "qber_x",
+      "analytic": 0.013333333333333345,
+      "qiskit": 0.01265,
+      "standard_error": 0.000811035004039763,
+      "z_score": -0.8425448099399699
+    },
+    {
+      "F": 0.98,
+      "quantity": "chsh",
+      "analytic": 2.753002401419625,
+      "qiskit": 2.7514,
+      "standard_error": 0.01025973792171234,
+      "z_score": -0.15618346509944378
+    },
+    {
+      "F": 0.95,
+      "quantity": "decode_no_error",
+      "analytic": 0.9359999999999999,
+      "qiskit": 0.9372625,
+      "standard_error": 0.0008653323061113577,
+      "z_score": 1.458977078613296
+    },
+    {
+      "F": 0.95,
+      "quantity": "decode_bit_flip",
+      "analytic": 0.02133333333333335,
+      "qiskit": 0.0206125,
+      "standard_error": 0.000510859841617814,
+      "z_score": -1.4110197643458988
+    },
+    {
+      "F": 0.95,
+      "quantity": "decode_phase_flip",
+      "analytic": 0.021333333333333346,
+      "qiskit": 0.0210125,
+      "standard_error": 0.000510859841617814,
+      "z_score": -0.6280261378880695
+    },
+    {
+      "F": 0.95,
+      "quantity": "decode_bit_and_phase_flip",
+      "analytic": 0.021333333333333346,
+      "qiskit": 0.0211125,
+      "standard_error": 0.000510859841617814,
+      "z_score": -0.4322777312736155
+    },
+    {
+      "F": 0.95,
+      "quantity": "qber_z",
+      "analytic": 0.03333333333333336,
+      "qiskit": 0.03135,
+      "standard_error": 0.0012692955176439851,
+      "z_score": -1.5625465510307173
+    },
+    {
+      "F": 0.95,
+      "quantity": "qber_x",
+      "analytic": 0.03333333333333336,
+      "qiskit": 0.033,
+      "standard_error": 0.0012692955176439851,
+      "z_score": -0.2626128657194653
+    },
+    {
+      "F": 0.95,
+      "quantity": "chsh",
+      "analytic": 2.6398653164297774,
+      "qiskit": 2.6424000000000003,
+      "standard_error": 0.010624918300339486,
+      "z_score": 0.23856028804870136
+    },
+    {
+      "F": 0.9,
+      "quantity": "decode_no_error",
+      "analytic": 0.8869999999999999,
+      "qiskit": 0.88795,
+      "standard_error": 0.0011193245731243467,
+      "z_score": 0.8487261182414702
+    },
+    {
+      "F": 0.9,
+      "quantity": "decode_bit_flip",
+      "analytic": 0.03766666666666667,
+      "qiskit": 0.036925,
+      "standard_error": 0.0006731259994318383,
+      "z_score": -1.1018244240939774
+    },
+    {
+      "F": 0.9,
+      "quantity": "decode_phase_flip",
+      "analytic": 0.03766666666666666,
+      "qiskit": 0.0373875,
+      "standard_error": 0.0006731259994318382,
+      "z_score": -0.4147316652488514
+    },
+    {
+      "F": 0.9,
+      "quantity": "decode_bit_and_phase_flip",
+      "analytic": 0.03766666666666666,
+      "qiskit": 0.0377375,
+      "standard_error": 0.0006731259994318382,
+      "z_score": 0.10523042252583813
+    },
+    {
+      "F": 0.9,
+      "quantity": "qber_z",
+      "analytic": 0.06666666666666665,
+      "qiskit": 0.06445,
+      "standard_error": 0.0017638342073763935,
+      "z_score": -1.256731872755676
+    },
+    {
+      "F": 0.9,
+      "quantity": "qber_x",
+      "analytic": 0.06666666666666665,
+      "qiskit": 0.0655,
+      "standard_error": 0.0017638342073763935,
+      "z_score": -0.6614378277661378
+    },
+    {
+      "F": 0.9,
+      "quantity": "chsh",
+      "analytic": 2.451303508113365,
+      "qiskit": 2.4522,
+      "standard_error": 0.011175369742826806,
+      "z_score": 0.08022033339974483
+    }
+  ]
+}

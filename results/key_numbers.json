@@ -80,6 +80,10 @@
     {
       "file": "fig17_design_space.png",
       "caption": "Every combination of distribution x certification x monitoring x transport x authentication x delivery, scored"
+    },
+    {
+      "file": "fig18_qiskit_validation.png",
+      "caption": "Qiskit Aer simulation of the superdense, QBER and CHSH circuits agrees with the analytic model within 3 standard errors"
     }
   ],
   "F095": {

@@ -528,6 +528,12 @@ simulation:
       buffers_s: [10, 30, 60, 120]
       margins: [1.05, 1.5]
       receivers: 16
+    fig18:
+      fidelities: [1.0, 0.98, 0.95, 0.9]
+      shots: 20000
+      return_noise: 0.02
+      seed: 11
+      sigma_bound: 3
   standalone:
     transports_print_km: [0, 5, 10, 15, 20, 30, 50, 100, 150, 200]
     transports_fidelities: [1.0, 0.98, 0.95, 0.9]

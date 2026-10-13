@@ -530,9 +530,58 @@ def fig17_pareto(c):
     c.save(fig, "fig17_design_space.png", "Every combination of distribution x certification x monitoring x transport x authentication x delivery, scored")
 
 
+def fig18_qiskit_validation(c):
+    import qiskit_validation as qv
+    from transports import compose
+    from core import qber_from_weights
+    if not qv.AVAILABLE:
+        print("  skipped fig18: Qiskit is not installed (pip install qiskit qiskit-aer)")
+        return
+    xc = X["fig18"]
+    k = xc["sigma_bound"]
+    rows = qv.validate()
+    with open(os.path.join(c.out, "qiskit_validation.json"), "w") as fh:
+        json.dump(qv.report(rows), fh, indent=2)
+    d = pd.DataFrame(rows)
+    Fs = np.linspace(min(xc["fidelities"]) - 0.01, 1.0, 120)
+    fig, axs = plt.subplots(1, 3, figsize=(11.5, 3.9))
+
+    def points(ax, quantity, marker, filled, shift, label, scale=1):
+        g = d[d.quantity == quantity]
+        ax.errorbar(g.F + shift, g.qiskit * scale, yerr=k * g.standard_error * scale, fmt=marker, ms=5, color=ACC, mfc=ACC if filled else "white", mec=ACC, elinewidth=1, capsize=2.5, lw=0, label=label)
+
+    axs[0].plot(Fs, [compose(werner_weights(F), xc["return_noise"])[1] * 100 for F in Fs], color=INK, label="Analytic (each error type)")
+    points(axs[0], "decode_bit_flip", "o", True, -0.003, "Qiskit: bit flip", 100)
+    points(axs[0], "decode_phase_flip", "s", False, 0.0, "Qiskit: phase flip", 100)
+    points(axs[0], "decode_bit_and_phase_flip", "^", True, 0.003, "Qiskit: both", 100)
+    axs[0].set_ylabel("Probability of each decoding error (%)")
+    axs[0].set_title(f"Superdense decoding, {xc['return_noise'] * 100:.0f}% return noise", fontsize=10)
+
+    axs[1].plot(Fs, [qber_from_weights(werner_weights(F))[0] * 100 for F in Fs], color=INK, label="Analytic (Z and X equal)")
+    points(axs[1], "qber_z", "o", True, -0.0015, "Qiskit: Z basis", 100)
+    points(axs[1], "qber_x", "s", False, 0.0015, "Qiskit: X basis", 100)
+    axs[1].set_ylabel("Error rate, QBER (%)")
+    axs[1].set_title("Error rates in the two bases", fontsize=10)
+
+    axs[2].plot(Fs, [chsh_from_weights(werner_weights(F)) for F in Fs], color=INK, label="Analytic")
+    points(axs[2], "chsh", "o", True, 0.0, "Qiskit")
+    axs[2].axhline(2, color=G2, ls="--", lw=1)
+    axs[2].text(Fs[0], 2.02, "classical limit S = 2", color=G1, fontsize=8)
+    axs[2].set_ylim(1.9, 2.95)
+    axs[2].set_ylabel("CHSH value S")
+    axs[2].set_title("Bell test", fontsize=10)
+
+    for ax in axs:
+        ax.set_xlabel("Pair fidelity F")
+        ax.legend(fontsize=7.5, loc="best")
+    fig.suptitle(f"Independent check: Qiskit circuits vs analytic model ({xc['shots']} shots per circuit, bars = ±{k} standard errors)", fontweight="bold", y=1.02)
+    fig.tight_layout()
+    c.save(fig, "fig18_qiskit_validation.png", f"Qiskit Aer simulation of the superdense, QBER and CHSH circuits agrees with the analytic model within {k} standard errors")
+
+
 ALL = [fig01_rate_vs_distance, fig02_superdense_security, fig03_switch_rule, fig04_crossover_sensitivity, fig05_06_detection,
        fig07_on_time_vs_hops, fig08_pool_timeseries, fig09_pool_sizing, fig10_11_multicast, fig12_hybrid, fig14_finite_key,
-       fig15_memory_needed, fig16_scheduling, fig17_pareto]
+       fig15_memory_needed, fig16_scheduling, fig17_pareto, fig18_qiskit_validation]
 
 
 def main(out_dir="results", fast=False, only=None):
