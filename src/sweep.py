@@ -2,6 +2,10 @@ import itertools
 import numpy as np
 import pandas as pd
 from transports import Link, rates_at
+from config import CFG
+
+SW = CFG["sweep"]
+EXP = SW["exposure"]
 
 lk = Link()
 DISTS = ["direct", "mdi", "di_heralded"]
@@ -11,15 +15,9 @@ TRANSPORTS = ["key_otp", "two_step_sdc", "adaptive", "dl04", "ping_pong"]
 AUTHS = ["none", "pqc_signature", "wegman_carter_recycled", "qia_entanglement"]
 DELIVERY = ["jit_trusted_relay", "pool_trusted_relay", "multipath_pool_2of3", "e2e_swap_pool", "pool_pqc_fallback"]
 
-ON_TIME_4HOP = {
-    "jit_trusted_relay": 0.674,
-    "pool_trusted_relay": 0.987,
-    "multipath_pool_2of3": 1.0,
-    "e2e_swap_pool": 0.241,
-    "pool_pqc_fallback": 1.0,
-}
-ITS_FRACTION = {"pool_pqc_fallback": 0.987}
-QSDC_JIT_4HOP = 0.906 ** 4
+ON_TIME_4HOP = SW["on_time_4hop"]
+ITS_FRACTION = SW["its_fraction"]
+QSDC_JIT_4HOP = SW["qsdc_jit_per_hop"] ** SW["qsdc_jit_hops"]
 
 
 def rate(dist, cert, transport, L):
@@ -33,30 +31,30 @@ def rate(dist, cert, transport, L):
     if transport == "dl04":
         return r["dl04"]
     if transport == "ping_pong":
-        return 0.0
+        return SW["ping_pong_rate"]
 
 
 def attacks(dist, monitor, transport, auth, delivery):
     two_way = transport in ("two_step_sdc", "adaptive", "dl04", "ping_pong")
-    det = {"static_qber": 1.0, "multi_monitor": 0.5, "ml_telemetry": 0.5}[monitor] if dist == "direct" else 0.0
-    trojan_base = 1.0 if two_way else 0.5
-    trojan = trojan_base * {"static_qber": 1.0, "multi_monitor": 0.5, "ml_telemetry": 0.5}[monitor]
+    det = EXP["detector_side_channel"]["direct_by_monitor"][monitor] if dist == "direct" else EXP["detector_side_channel"]["other"]
+    trojan_base = EXP["trojan_horse"]["two_way"] if two_way else EXP["trojan_horse"]["one_way"]
+    trojan = trojan_base * EXP["trojan_horse"]["monitor_factor"][monitor]
     a = {
-        "channel_eavesdrop": 1.0 if transport == "ping_pong" else 0.0,
+        "channel_eavesdrop": EXP["channel_eavesdrop"]["ping_pong"] if transport == "ping_pong" else EXP["channel_eavesdrop"]["other"],
         "detector_side_channel": det,
         "trojan_horse": trojan,
-        "source_side_channel": 0.5 if transport == "dl04" else (0.25 if dist == "mdi" else 0.0),
-        "mitm": {"none": 1.0, "pqc_signature": 0.25, "wegman_carter_recycled": 0.0, "qia_entanglement": 0.0}[auth],
-        "relay_compromise": {"jit_trusted_relay": 1.0, "pool_trusted_relay": 1.0, "multipath_pool_2of3": 0.33, "e2e_swap_pool": 0.0, "pool_pqc_fallback": 1.0}[delivery],
-        "key_at_rest": 0.0 if transport in ("two_step_sdc", "dl04", "ping_pong") else (0.25 if "pool" in delivery else 0.0),
-        "fallback_computational": 0.25 if delivery == "pool_pqc_fallback" else 0.0,
+        "source_side_channel": EXP["source_side_channel"]["dl04"] if transport == "dl04" else (EXP["source_side_channel"]["mdi"] if dist == "mdi" else EXP["source_side_channel"]["other"]),
+        "mitm": EXP["mitm"][auth],
+        "relay_compromise": EXP["relay_compromise"][delivery],
+        "key_at_rest": EXP["key_at_rest"]["keyless_transport"] if transport in ("two_step_sdc", "dl04", "ping_pong") else (EXP["key_at_rest"]["pool_delivery"] if "pool" in delivery else EXP["key_at_rest"]["other"]),
+        "fallback_computational": EXP["fallback_computational"]["pool_pqc_fallback"] if delivery == "pool_pqc_fallback" else EXP["fallback_computational"]["other"],
     }
     return a
 
 
 def on_time(transport, delivery):
     if transport in ("two_step_sdc", "dl04", "ping_pong"):
-        return QSDC_JIT_4HOP if delivery == "jit_trusted_relay" else 0.0
+        return QSDC_JIT_4HOP if delivery == "jit_trusted_relay" else SW["qsdc_non_jit_on_time"]
     return ON_TIME_4HOP[delivery]
 
 
@@ -70,7 +68,7 @@ for dist in DISTS:
             if dist == "mdi" and transport == "dl04":
                 continue
             key = (dist, cert, transport)
-            cache[key] = (rate(dist, cert, transport, 10.0), rate(dist, cert, transport, 50.0))
+            cache[key] = tuple(rate(dist, cert, transport, L) for L in SW["rate_distances_km"])
             for monitor, auth, delivery in itertools.product(MONITORS, AUTHS, DELIVERY):
                 if transport in ("two_step_sdc", "dl04", "ping_pong") and delivery not in ("jit_trusted_relay", "e2e_swap_pool"):
                     continue

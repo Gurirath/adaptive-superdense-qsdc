@@ -2,15 +2,20 @@ import numpy as np
 import pandas as pd
 from deliver import outage_trace
 from transports import Link, rates_at
+from config import CFG, availability
+
+H = CFG["hybrid"]
+S = CFG["scheduling"]
+X = CFG["experiments"]
 
 
-def hybrid_link(L=2.0, demand_frac=0.8, buf_s=120, T=40000, seed=0):
+def hybrid_link(L=H["link_km"], demand_frac=H["demand_frac"], buf_s=H["buffer_s"], T=H["duration_s"], seed=H["seed"]):
     lk = Link()
     r = rates_at(L, lk)
     P = r["pair_rate"]
     k = r["key_mode"] / P
     s = r["sdc_two_step"] / P
-    A = 300 / 330
+    A = availability()
     rng = np.random.default_rng(seed)
     up = outage_trace(T, rng)
     d = demand_frac * A * P * k
@@ -69,10 +74,10 @@ def hybrid_link(L=2.0, demand_frac=0.8, buf_s=120, T=40000, seed=0):
     return out
 
 
-def schedule_sim(N=16, margin=1.2, buf_s=60, sched="equal_up", T=20000, seed=0):
+def schedule_sim(N=S["receivers"], margin=S["margin"], buf_s=S["buffer_s"], sched="equal_up", T=S["duration_s"], seed=S["seed"]):
     rng = np.random.default_rng(seed)
-    A = 300 / 330
-    d = 1.0
+    A = availability()
+    d = S["demand_per_receiver"]
     R = margin * N * d / A
     cap = buf_s * d + d
     ups = np.array([outage_trace(T, rng) for _ in range(N)], dtype=bool)
@@ -120,16 +125,16 @@ def schedule_sim(N=16, margin=1.2, buf_s=60, sched="equal_up", T=20000, seed=0):
 if __name__ == "__main__":
     pd.set_option("display.width", 220)
     print("== QSDC + pool hybrid on a short link ==")
-    for L in [1.0, 3.0, 5.0]:
+    for L in X["fig12"]["link_lengths_km"]:
         res = hybrid_link(L=L)
         print(f"L={L}km capacity gain from hybrid = {res.pop('capacity_gain_hybrid'):.3f}")
         print(pd.DataFrame(res).T.round(3).to_string())
     print("== shared-source scheduling for multicast pools ==")
     rows = []
-    for margin in [1.05, 1.2, 1.5]:
-        for buf in [10, 30, 60, 120]:
+    for margin in CFG["standalone"]["scheduling_margins"]:
+        for buf in X["fig16"]["buffers_s"]:
             for s in ["static_equal", "equal_up", "lowest_pool_first", "time_to_empty"]:
-                v = [schedule_sim(16, margin, buf, s, seed=sd) for sd in range(2)]
+                v = [schedule_sim(S["receivers"], margin, buf, s, seed=sd) for sd in range(X["n_seeds"])]
                 rows.append(dict(margin=margin, buffer_s=buf, sched=s, on_time=np.mean([a for a, _ in v]), key_at_rest_s=np.mean([b for _, b in v])))
     df = pd.DataFrame(rows)
     df.to_csv("out_scheduling.csv", index=False)

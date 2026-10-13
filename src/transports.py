@@ -2,23 +2,29 @@ import numpy as np
 import pandas as pd
 from dataclasses import dataclass, replace
 from core import h2, shannon, werner_weights, key_rate_bbm92, key_rate_tomographic, key_rate_di, finite_key_penalty
+from config import CFG
+
+LK = CFG["link"]
+TR = CFG["transport"]
+NUM = CFG["numerics"]
+SA = CFG["standalone"]
 
 
 @dataclass
 class Link:
-    alpha_db_km: float = 0.2
-    eta_det: float = 0.85
-    p_dark: float = 1e-8
-    e_mis: float = 0.01
-    clock_hz: float = 1e9
-    mu: float = 0.01
-    t2_mem_s: float = 0.01
-    eta_mem: float = 0.9
-    t_check_s: float = 1e-3
-    c_fiber_km_s: float = 2e5
-    bsm_eff: float = 0.5
-    di_herald_hz: float = 10.0
-    block_bits: float = 1e6
+    alpha_db_km: float = LK["alpha_db_km"]
+    eta_det: float = LK["eta_det"]
+    p_dark: float = LK["p_dark"]
+    e_mis: float = LK["e_mis"]
+    clock_hz: float = LK["clock_hz"]
+    mu: float = LK["mu"]
+    t2_mem_s: float = LK["t2_mem_s"]
+    eta_mem: float = LK["eta_mem"]
+    t_check_s: float = LK["t_check_s"]
+    c_fiber_km_s: float = LK["c_fiber_km_s"]
+    bsm_eff: float = LK["bsm_eff"]
+    di_herald_hz: float = LK["di_herald_hz"]
+    block_bits: float = LK["block_bits"]
 
 
 def eta_fiber(L, lk):
@@ -49,12 +55,12 @@ def compose(p, q):
     return out
 
 
-def worst_entropy_given_qber(ez, ex, grid=400):
+def worst_entropy_given_qber(ez, ex, grid=NUM["worst_case_grid"]):
     best = 0.0
     lo, hi = 0.0, min(ez, ex)
     for p3 in np.linspace(lo, hi, grid):
         p = np.array([1 - ez - ex + p3, ez - p3, ex - p3, p3])
-        if (p < -1e-12).any():
+        if (p < -NUM["weight_tolerance"]).any():
             continue
         best = max(best, shannon(np.clip(p, 0, 1)))
     return best
@@ -95,14 +101,14 @@ def sdc_per_pair(p, q2, cert, bsm="complete"):
     return max(0.0, I_ab - chi)
 
 
-def worst_weights(p, cert, grid=400):
+def worst_weights(p, cert, grid=NUM["worst_case_grid"]):
     if cert == "tomographic":
         return p
     ez, ex = p[1] + p[3], p[2] + p[3]
     best, bp = -1, p
     for p3 in np.linspace(0, min(ez, ex), grid):
         c = np.array([1 - ez - ex + p3, ez - p3, ex - p3, p3])
-        if (c < -1e-12).any():
+        if (c < -NUM["weight_tolerance"]).any():
             continue
         c = np.clip(c, 0, 1)
         hc = shannon(c)
@@ -130,7 +136,7 @@ def rates_at(L, lk, cert="tomographic", dist="direct", finite=False, bsm="comple
     elif dist == "di_heralded":
         arrive = lk.di_herald_hz * eta_fiber(L, lk)
         pair_rate = arrive
-        Q1 = 0.02
+        Q1 = TR["di_qber"]
     else:
         raise ValueError(dist)
     p = werner_from_qber(Q1)
@@ -147,14 +153,14 @@ def rates_at(L, lk, cert="tomographic", dist="direct", finite=False, bsm="comple
     rt = (eta * lk.eta_det) ** 2
     Qrt = min(0.5, 2 * leg_qber(eta, lk))
     pp_raw = lk.clock_hz * lk.mu * rt
-    out["ping_pong"] = pp_raw * max(0.0, 1 - 2 * h2(Qrt)) if rt > 0.75 else 0.0
+    out["ping_pong"] = pp_raw * max(0.0, 1 - 2 * h2(Qrt)) if rt > TR["ping_pong_min_round_trip"] else 0.0
     out["dl04"] = lk.clock_hz * lk.mu * rt * max(0.0, 1 - 2 * h2(Qrt)) if dist == "direct" else np.nan
     return out
 
 
 def sweep(lk=None, dists=("direct", "mdi", "di_heralded"), certs=("bbm92", "tomographic", "di"), Ls=None, finite=False):
     lk = lk or Link()
-    Ls = np.arange(0, 201, 1) if Ls is None else Ls
+    Ls = np.arange(*TR["distance_grid_km"]) if Ls is None else Ls
     rows = []
     for d in dists:
         for c in certs:
@@ -180,18 +186,18 @@ if __name__ == "__main__":
     df = sweep(lk)
     df.to_csv("out_transports.csv", index=False)
     d = df[(df.dist == "direct") & (df.cert == "tomographic")]
-    for L in [0, 5, 10, 15, 20, 30, 50, 100, 150, 200]:
+    for L in SA["transports_print_km"]:
         r = d[d.L_km == L].iloc[0]
         print(f"L={L:3d} Q={r.QBER:.4f} key={r.key_mode:10.1f} sdc={r.sdc_two_step:10.1f} adapt={r.adaptive:10.1f} pp={r.ping_pong:8.1f} dl04={r.dl04:10.1f}")
     cross = d[~d.sdc_wins].L_km.min()
     print("crossover km (tomographic, direct):", cross)
     db = df[(df.dist == "direct") & (df.cert == "bbm92")]
     print("crossover km (bbm92, direct):", db[~db.sdc_wins].L_km.min())
-    for F in [1.0, 0.98, 0.95, 0.9]:
+    for F in SA["transports_fidelities"]:
         p = werner_weights(F)
-        print(F, "eta* tomo", round(switch_threshold_eta(p, 0.0), 4), "eta* bbm92", round(switch_threshold_eta(p, 0.0, "bbm92"), 4), "eta* q=.02", round(switch_threshold_eta(p, 0.02), 4))
+        print(F, "eta* tomo", round(switch_threshold_eta(p, 0.0), 4), "eta* bbm92", round(switch_threshold_eta(p, 0.0, "bbm92"), 4), "eta* q=.02", round(switch_threshold_eta(p, CFG["experiments"]["fig03"]["report_return_noise"]), 4))
     for name, sub in df.groupby(["dist", "cert"]):
-        mx = sub[sub.adaptive > 1].L_km.max()
-        print(name, "max distance with >1 bit/s adaptive:", mx, " key-only:", sub[sub.key_mode > 1].L_km.max())
+        mx = sub[sub.adaptive > SA["transports_min_rate"]].L_km.max()
+        print(name, "max distance with >1 bit/s adaptive:", mx, " key-only:", sub[sub.key_mode > SA["transports_min_rate"]].L_km.max())
     dfin = sweep(lk, finite=True)
     dfin.to_csv("out_transports_finite.csv", index=False)

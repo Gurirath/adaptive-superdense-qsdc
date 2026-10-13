@@ -47,9 +47,55 @@ A pre-generated copy of all results is already included in `results/`, in case y
 | fig16_scheduling | analytical | Multicast: buffer depth matters, source capacity barely does |
 | fig17_design_space | scatter | All 804 combinations: security vs rate vs on-time |
 
+## Parameters and their sources
+
+Every model parameter lives in `config.yaml`. The simulation code holds no parameter values of its own; it reads them through `src/config.py`.
+
+Each entry has a `value` and a `source`, and may have a `unit` and a `note`:
+
+```yaml
+link:
+  alpha_db_km:
+    value: 0.2
+    unit: dB/km
+    source: "Gisin, N., Ribordy, G., Tittel, W., Zbinden, H. (2002). Quantum cryptography. ..."
+    note: "The review gives 0.2 dB/km as the attenuation of standard telecom fibre at 1550 nm."
+```
+
+A `source` is one of two things:
+
+- A published reference with authors, year, title and DOI. Each one was checked against its DOI record and against the paper's abstract or full text. Where the paper supports a value without stating it exactly, the `note` says so.
+- The word `assumption` followed by a one-line reason. This covers design choices, modelled quantities and anything for which no reference could be verified.
+
+Five values carry a published reference: fibre attenuation, detector efficiency, Bell-measurement efficiency, the finite-key correction coefficient and the error-correction efficiency. Everything else is an assumption and is labelled as one.
+
+The sections of `config.yaml` are:
+
+| Section | What it holds |
+| --- | --- |
+| `link` | Fibre, source, detector and memory parameters of one link |
+| `transport` | Settings of the rate model shared by all transports |
+| `numerics` | Numerical guards and grid sizes |
+| `outage` | Mean up time and mean outage length of a link |
+| `delivery`, `pools` | Multi-hop delivery and key-pool settings |
+| `multicast`, `hybrid`, `scheduling` | 1-to-N, QSDC + pool hybrid and shared-source scheduling settings |
+| `finite_key` | Finite-key security and block-size settings |
+| `detection` | Synthetic telemetry, attack signatures and detector settings |
+| `sweep` | Scoring inputs and exposure weights of the design-space sweep |
+| `experiments` | Grids, durations and seeds used by each figure |
+| `standalone` | Values used only when a module is run on its own |
+
+To try a different value, edit its `value` in `config.yaml` and re-run. Write numbers with an exponent as `1.0e-8`, not `1e-8`: the YAML reader treats the second form as text, and the loader stops with an error if it finds text where a number should be.
+
+Mathematical constants stay in the code because they are part of the formulas, not choices: the factor of 10 in decibel conversion, the Werner-state and depolarising-channel coefficients, 0.5 as the largest possible error rate, and array dimensions. Plot styling in `src/figures.py` (figure sizes, colours, label positions) also stays in the code.
+
+Moving the parameters into `config.yaml` did not change any result: the figures, the CSV files and `results/key_numbers.json` are byte-for-byte the same as before.
+
 ## Code layout
 
 - `run_all.py` — entry point
+- `config.yaml` — every parameter, with its source
+- `src/config.py` — loads `config.yaml` and checks that every entry has a numeric value and a source
 - `src/figures.py` — builds every figure and the numbers file
 - `src/core.py` — density matrices, Bell states, Holevo information, key-rate formulas
 - `src/transports.py` — fiber link model and secure rate of each transport
@@ -64,6 +110,6 @@ Each `src/*.py` file can also be run on its own (for example `cd src && python t
 
 ## Assumptions
 
-0.2 dB/km fiber, 0.85 detector efficiency, 1e-8 dark counts, 1% misalignment, 1 GHz clock, 0.01 pairs per pulse, 10 ms quantum memory with 0.9 efficiency, and link outages averaging 300 s up / 30 s down. Attack signatures in the telemetry are modelled, not measured on hardware. Results use fixed random seeds, so every run gives the same numbers.
+0.2 dB/km fiber, 0.85 detector efficiency, 1e-8 dark counts, 1% misalignment, 1 GHz clock, 0.01 pairs per pulse, 10 ms quantum memory with 0.9 efficiency, and link outages averaging 300 s up / 30 s down. Attack signatures in the telemetry are modelled, not measured on hardware. Results use fixed random seeds, so every run gives the same numbers. The full list, with the source of each value, is in `config.yaml`.
 
 See `SUMMARY.md` for the one-page summary of findings.

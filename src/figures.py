@@ -9,12 +9,15 @@ import matplotlib.pyplot as plt
 
 from core import werner_weights, shannon, sdc_information, sdc_linear_optics, chsh_from_weights
 from transports import Link, rates_at, sweep as transport_sweep, switch_threshold_eta, eta_fiber
-from detect import telemetry, features, static_threshold, multi_threshold, run as detect_run
+from detect import telemetry, features, static_threshold, multi_threshold, run as detect_run, ATTACKS
 from deliver import simulate_path, outage_trace, STRATS
 from pools import pool_sim, pool_trace
 from multicast import mean_group_rate, on_time as mc_on_time, ghz_rate
 from extend_net import hybrid_link, schedule_sim
 from extend_theory import pool_vs_jit_blocks, switch_threshold_qudit
+from config import CFG, availability
+
+X = CFG["experiments"]
 
 INK = "#111111"
 G1 = "#555555"
@@ -50,6 +53,7 @@ class Ctx:
     def __init__(self, out_dir, fast):
         self.out = out_dir
         self.fast = fast
+        self.mode = "fast" if fast else "full"
         self.results = {}
         os.makedirs(out_dir, exist_ok=True)
         os.makedirs(os.path.join(out_dir, "data"), exist_ok=True)
@@ -64,7 +68,7 @@ class Ctx:
 
 def fig01_rate_vs_distance(c):
     lk = Link()
-    df = transport_sweep(lk, dists=("direct",), certs=("tomographic",), Ls=np.arange(0, 201, 1))
+    df = transport_sweep(lk, dists=("direct",), certs=("tomographic",), Ls=np.arange(*CFG["transport"]["distance_grid_km"]))
     df.to_csv(os.path.join(c.out, "data", "rates_vs_distance.csv"), index=False)
     fig, ax = plt.subplots(figsize=(7.2, 4.4))
     ax.semilogy(df.L_km, df.adaptive, color=ACC, lw=5, alpha=0.3, label="Adaptive switch (proposed): best of both")
@@ -81,13 +85,13 @@ def fig01_rate_vs_distance(c):
     ax.set_title("1-to-1: secure rate vs distance for each transport")
     ax.legend(loc="lower left")
     c.results["switch_point_km"] = cross
-    c.results["rate_at_10km"] = {k: float(df[df.L_km == 10][k].iloc[0]) for k in ["key_mode", "sdc_two_step", "adaptive", "dl04"]}
-    c.results["rate_at_50km"] = {k: float(df[df.L_km == 50][k].iloc[0]) for k in ["key_mode", "sdc_two_step", "adaptive", "dl04"]}
+    for L in X["fig01"]["report_distances_km"]:
+        c.results[f"rate_at_{L}km"] = {k: float(df[df.L_km == L][k].iloc[0]) for k in ["key_mode", "sdc_two_step", "adaptive", "dl04"]}
     c.save(fig, "fig01_rate_vs_distance.png", "Secure rate vs distance; superdense direct only wins below the switch point; ping-pong never secure")
 
 
 def fig02_superdense_security(c):
-    Fs = np.linspace(0.78, 1.0, 45)
+    Fs = np.linspace(*X["fig02"]["fidelity_grid"])
     rows = []
     for F in Fs:
         p = werner_weights(F)
@@ -107,24 +111,25 @@ def fig02_superdense_security(c):
     ax2 = ax.secondary_xaxis("top", functions=(lambda F: 2 * np.sqrt(2) * (4 * F - 1) / 3, lambda S: (3 * S / (2 * np.sqrt(2)) + 1) / 4))
     ax2.set_xlabel("Equivalent CHSH value S", fontsize=9)
     ax.legend(loc="upper left", fontsize=8.5)
-    p95 = werner_weights(0.95)
+    p95 = werner_weights(X["fig02"]["report_fidelity"])
     c.results["F095"] = {"eve_bits": shannon(p95), "sdc_secure": 2 - 2 * shannon(p95), "key_secure": 1 - shannon(p95)}
     c.save(fig, "fig02_superdense_security.png", "Density-matrix result: superdense gives exactly 2x key mode per verified pair; Eve's information bounded by pair entropy H(p)")
 
 
 def fig03_switch_rule(c):
-    etas = np.linspace(0.05, 1, 200)
+    xc = X["fig03"]
+    etas = np.linspace(*xc["eta_grid"])
     fig, ax = plt.subplots(figsize=(7.2, 4.2))
-    styles = [(0.99, INK, "-"), (0.95, G1, "--"), (0.90, G2, ":")]
+    styles = list(zip(xc["fidelities"], [INK, G1, G2], ["-", "--", ":"]))
     for F, col, ls in styles:
         p = werner_weights(F)
         k = 1 - shannon(p)
         s = 2 - 2 * shannon(p)
         ax.plot(etas, etas * s / k, color=col, ls=ls, label=f"F = {F} (all fidelities overlap)")
-    pn = werner_weights(0.95)
+    pn = werner_weights(xc["noisy_fidelity"])
     from transports import sdc_per_pair
-    sn = sdc_per_pair(pn, 0.05, "tomographic")
-    ax.plot(etas, etas * sn / (1 - shannon(pn)), color=G2, lw=1.2, ls="-.", label="F = 0.95 with 5% noise on return leg")
+    sn = sdc_per_pair(pn, xc["noisy_return_noise"], "tomographic")
+    ax.plot(etas, etas * sn / (1 - shannon(pn)), color=G2, lw=1.2, ls="-.", label=f"F = {xc['noisy_fidelity']} with {xc['noisy_return_noise'] * 100:.0f}% noise on return leg")
     ax.axhline(1, color=INK, lw=0.8)
     ax.axvline(0.5, color=ACC, lw=1.2)
     ax.fill_betweenx([0, 2.1], 0.5, 1.0, color=ACC, alpha=0.07)
@@ -136,24 +141,26 @@ def fig03_switch_rule(c):
     ax.set_ylabel("Superdense rate ÷ key-mode rate")
     ax.set_title("Switching rule: superdense wins only when η > 1/2")
     ax.legend(loc="lower right")
-    dims = [2, 3, 4, 8, 16]
-    c.results["switch_threshold_by_dimension"] = {str(d): switch_threshold_qudit(d, 0.95)[0] for d in dims}
-    c.results["switch_threshold_with_2pct_return_noise"] = float(switch_threshold_eta(werner_weights(0.95), 0.02))
+    dims = xc["dimensions"]
+    c.results["switch_threshold_by_dimension"] = {str(d): switch_threshold_qudit(d, xc["report_fidelity"])[0] for d in dims}
+    c.results["switch_threshold_with_2pct_return_noise"] = float(switch_threshold_eta(werner_weights(xc["report_fidelity"]), xc["report_return_noise"]))
     c.save(fig, "fig03_switch_rule.png", "Closed-form switching rule eta* = (1-H)/(2-H(p.q)-H) = 1/2 for any fidelity and any qudit dimension")
 
 
 def fig04_crossover_sensitivity(c):
+    xc = X["fig04"]
+    Ls = np.arange(*xc["distance_grid_km"])
     labels, vals = [], []
-    for T2 in [1e-3, 1e-2, 1e-1, 1.0]:
+    for T2 in xc["t2_values_s"]:
         lk = Link(t2_mem_s=T2)
-        d = pd.DataFrame([rates_at(float(L), lk) for L in np.arange(0, 31, 1)])
+        d = pd.DataFrame([rates_at(float(L), lk) for L in Ls])
         labels.append(f"memory\nT2={T2:g}s")
         vals.append(float(d[~d.sdc_wins].L_km.min()))
-    lk = Link(t2_mem_s=1e3, eta_mem=1.0)
-    d = pd.DataFrame([rates_at(float(L), lk) for L in np.arange(0, 31, 1)])
+    lk = Link(t2_mem_s=xc["perfect_t2_s"], eta_mem=xc["perfect_eta_mem"])
+    d = pd.DataFrame([rates_at(float(L), lk) for L in Ls])
     labels.append("perfect\nmemory")
     vals.append(float(d[~d.sdc_wins].L_km.min()))
-    d = pd.DataFrame([rates_at(float(L), Link(), "tomographic", "direct", False, "linear") for L in np.arange(0, 31, 1)])
+    d = pd.DataFrame([rates_at(float(L), Link(), "tomographic", "direct", False, "linear") for L in Ls])
     labels.append("linear-optics\nBell meas.")
     vals.append(float(d[~d.sdc_wins].L_km.min()))
     fig, ax = plt.subplots(figsize=(7.2, 3.8))
@@ -168,23 +175,25 @@ def fig04_crossover_sensitivity(c):
 
 
 def fig05_06_detection(c):
-    seeds_train = (1, 2) if c.fast else (1, 2, 3)
-    res, clf, thr = detect_run(seeds_train=seeds_train, seeds_test=(11, 12))
+    xc = X["fig05"]
+    fa = CFG["detection"]["false_alarm"]
+    seeds_train = tuple(xc["train_seeds"][c.mode])
+    res, clf, thr = detect_run(seeds_train=seeds_train, seeds_test=tuple(xc["test_seeds"]))
     train = pd.concat([telemetry(seed=s) for s in seeds_train], ignore_index=True)
-    te = telemetry(T=86400, seed=11)
+    te = telemetry(T=xc["display_duration_s"], seed=xc["display_seed"])
     F = features(te)
     ml = (1 - clf.predict_proba(F)[:, 0]) > thr
-    st = static_threshold(te, 0.01, train).values.astype(bool)
-    mm = multi_threshold(te, 0.01, train).values.astype(bool)
+    st = static_threshold(te, fa, train).values.astype(bool)
+    mm = multi_threshold(te, fa, train).values.astype(bool)
     lab = te.label.values
     starts = np.where(np.diff(np.r_[0, (lab > 0).astype(int)]) == 1)[0]
-    best, w = 0, 5400
-    for s0 in range(0, 86400 - w, 600):
+    best, w = 0, xc["window_s"]
+    for s0 in range(0, xc["display_duration_s"] - w, xc["window_step_s"]):
         seg = lab[s0:s0 + w]
         n = len(set(seg[seg > 0]))
         if n > best:
             best, start = n, s0
-        if n == 3:
+        if n == len(ATTACKS) - 1:
             break
     sl = slice(start, start + w)
     t = np.arange(w) / 60.0
@@ -208,7 +217,7 @@ def fig05_06_detection(c):
             else:
                 i += 1
     axs[0].plot(t, (seg.qz + seg.qx) * 100, color=INK, lw=0.6)
-    axs[0].axhline(np.quantile((train.qz + train.qx)[train.label == 0], 0.99) * 100, color=G2, ls="--", lw=1)
+    axs[0].axhline(np.quantile((train.qz + train.qx)[train.label == 0], 1 - fa) * 100, color=G2, ls="--", lw=1)
     axs[0].set_ylabel("QBER sum (%)")
     fig.suptitle("Time series: link telemetry with attacks (shaded red) and detector alarms", fontweight="bold", y=0.985)
     fig.subplots_adjust(top=0.9, hspace=0.28)
@@ -248,12 +257,13 @@ def fig05_06_detection(c):
 
 
 def fig07_on_time_vs_hops(c):
-    T = 20000 if c.fast else 40000
-    hops = [1, 2, 3, 4, 6, 8, 10]
+    xc = X["fig07"]
+    T = xc["duration_s"][c.mode]
+    hops = xc["hops"]
     rows = []
     for h in hops:
         for s in STRATS:
-            rows.append(dict(hops=h, strategy=s, on_time=np.mean([simulate_path(h, s, T=T, seed=sd) for sd in range(2)])))
+            rows.append(dict(hops=h, strategy=s, on_time=np.mean([simulate_path(h, s, T=T, seed=sd) for sd in range(X["n_seeds"])])))
     df = pd.DataFrame(rows)
     df.to_csv(os.path.join(c.out, "data", "on_time_vs_hops.csv"), index=False)
     piv = df.pivot(index="hops", columns="strategy", values="on_time")
@@ -268,8 +278,8 @@ def fig07_on_time_vs_hops(c):
     }
     for k, (col, ls, mk, lab) in spec.items():
         ax.plot(piv.index, piv[k] * 100, color=col, ls=ls, marker=mk, ms=5, label=lab)
-    ax.plot(piv.index, (300 / 330) ** piv.index * 100, color=INK, lw=0.6, alpha=0.5)
-    ax.text(6.2, (300 / 330) ** 6 * 100 - 9, "theory: 0.909^hops", fontsize=8, color=G1, bbox=dict(facecolor="white", edgecolor="none", alpha=0.9, pad=1.5))
+    ax.plot(piv.index, availability() ** piv.index * 100, color=INK, lw=0.6, alpha=0.5)
+    ax.text(6.2, availability() ** 6 * 100 - 9, "theory: 0.909^hops", fontsize=8, color=G1, bbox=dict(facecolor="white", edgecolor="none", alpha=0.9, pad=1.5))
     ax.set_xlabel("Number of hops")
     ax.set_ylabel("Keys delivered on time (%)")
     ax.set_ylim(-3, 105)
@@ -280,7 +290,8 @@ def fig07_on_time_vs_hops(c):
 
 
 def fig08_pool_timeseries(c):
-    ups, lvl, sp, sj = pool_trace(h=4, rho=0.8, buf_s=120, T=3600, seed=5)
+    xc = X["fig08"]
+    ups, lvl, sp, sj = pool_trace(h=xc["hops"], rho=xc["load"], buf_s=xc["buffer_s"], T=xc["duration_s"], seed=xc["seed"])
     t = np.arange(len(lvl)) / 60
     fig, axs = plt.subplots(3, 1, figsize=(9, 6), sharex=True, gridspec_kw=dict(height_ratios=[1, 1.4, 0.8]))
     for i in range(ups.shape[0]):
@@ -303,15 +314,16 @@ def fig08_pool_timeseries(c):
 
 
 def fig09_pool_sizing(c):
-    T = 30000 if c.fast else 60000
-    bufs = [0, 10, 30, 60, 120, 300]
+    xc = X["fig09"]
+    T = xc["duration_s"][c.mode]
+    bufs = xc["buffers_s"]
     fig, ax = plt.subplots(figsize=(7.2, 4.2))
     rows = []
-    for h, col, mk in [(1, G2, "o"), (4, G1, "s"), (8, INK, "D")]:
-        for rho, ls in [(0.5, "-"), (0.95, "--")]:
-            v = [pool_sim(h, rho, b, T=T, seed=0) for b in bufs]
+    for h, col, mk in zip(xc["hops"], [G2, G1, INK], ["o", "s", "D"]):
+        for rho, ls in zip(xc["loads"], ["-", "--"]):
+            v = [pool_sim(h, rho, b, T=T, seed=xc["seed"]) for b in bufs]
             rows += [dict(hops=h, rho=rho, buffer_s=b, on_time=x) for b, x in zip(bufs, v)]
-            ax.plot(np.array(bufs) / 30, np.array(v) * 100, color=col, ls=ls, marker=mk, ms=4, label=f"{h} hop{'s' if h > 1 else ''}, {int(rho*100)}% load")
+            ax.plot(np.array(bufs) / CFG["outage"]["mean_down_s"], np.array(v) * 100, color=col, ls=ls, marker=mk, ms=4, label=f"{h} hop{'s' if h > 1 else ''}, {int(rho*100)}% load")
     pd.DataFrame(rows).to_csv(os.path.join(c.out, "data", "pool_sizing.csv"), index=False)
     ax.axvline(4, color=ACC, lw=1)
     ax.text(4.15, 58, "sizing rule:\npool ≈ 4× mean outage", color=ACC, fontsize=8.5)
@@ -323,14 +335,15 @@ def fig09_pool_sizing(c):
 
 
 def fig10_11_multicast(c):
-    T = 15000 if c.fast else 30000
-    Ns = [2, 4, 8, 16, 32]
+    xc = X["fig10"]
+    T = xc["duration_s"][c.mode]
+    Ns = xc["receivers"]
     strats = {"bipartite_jit": (INK, "-", "o", "Bipartite links, just-in-time"), "ghz_jit": (G2, ":", "x", "GHZ conference key"), "bipartite_pools": (ACC, "-", "D", "Per-receiver pools (proposed)"), "bipartite_pools_receiver_fraction": (ACC, "--", "v", "Pools: share of receivers on time")}
     rows = []
     for N in Ns:
         r = {"N": N}
         for s in strats:
-            r[s] = np.mean([mc_on_time(N, s, 256e3, T=T, seed=sd) for sd in range(2)])
+            r[s] = np.mean([mc_on_time(N, s, CFG["delivery"]["demand_bps"], T=T, seed=sd) for sd in range(X["n_seeds"])])
         rows.append(r)
     df = pd.DataFrame(rows).set_index("N")
     df.to_csv(os.path.join(c.out, "data", "multicast_on_time.csv"))
@@ -348,15 +361,16 @@ def fig10_11_multicast(c):
     c.save(fig, "fig10_multicast_on_time.png", "Multicast: just-in-time falls as 0.909^N; GHZ dies past N=4; per-receiver pools stay at 94-99%")
     lk = Link()
     src = lk.clock_hz * lk.mu
-    locs = [0.5, 1, 2, 3, 5, 8]
-    Nn = [2, 3, 4, 6, 8, 12, 16]
+    xc = X["fig11"]
+    locs = xc["hub_links_km"]
+    Nn = xc["receivers"]
     grid = np.zeros((len(locs), len(Nn)))
-    Rb = rates_at(50.0, lk)["key_mode"]
-    eb = eta_fiber(50, lk) * lk.eta_det
+    Rb = rates_at(xc["bottleneck_km"], lk)["key_mode"]
+    eb = eta_fiber(xc["bottleneck_km"], lk) * lk.eta_det
     for i, Ll in enumerate(locs):
         el = eta_fiber(Ll, lk) * lk.eta_det
         for j, N in enumerate(Nn):
-            grid[i, j] = src * eb * el ** N * lk.eta_det * 0.8 / (Rb / N)
+            grid[i, j] = src * eb * el ** N * lk.eta_det * CFG["multicast"]["key_frac_ghz"] / (Rb / N)
     fig, ax = plt.subplots(figsize=(7.2, 4))
     im = ax.imshow(np.log2(grid), cmap="RdGy_r", vmin=-4, vmax=4, aspect="auto", origin="lower")
     for i in range(len(locs)):
@@ -366,7 +380,7 @@ def fig10_11_multicast(c):
     ax.set_yticks(range(len(locs)), locs)
     ax.set_xlabel("Number of receivers N")
     ax.set_ylabel("Hub-to-receiver link (km)")
-    ax.set_title("GHZ ÷ bipartite group-key rate (50 km bottleneck)")
+    ax.set_title(f"GHZ ÷ bipartite group-key rate ({xc['bottleneck_km']:g} km bottleneck)")
     ax.grid(False)
     cb = fig.colorbar(im, ax=ax)
     cb.set_label("log2 ratio (red = GHZ better)")
@@ -374,9 +388,10 @@ def fig10_11_multicast(c):
 
 
 def fig12_hybrid(c):
-    T = 20000 if c.fast else 40000
-    res = {L: hybrid_link(L=L, T=T) for L in [1.0, 3.0, 5.0]}
-    r1 = res[1.0]
+    xc = X["fig12"]
+    T = xc["duration_s"][c.mode]
+    res = {L: hybrid_link(L=L, T=T) for L in xc["link_lengths_km"]}
+    r1 = res[xc["report_link_km"]]
     gain = {L: r.pop("capacity_gain_hybrid") for L, r in res.items()}
     tab = pd.DataFrame(r1).T
     tab.to_csv(os.path.join(c.out, "data", "hybrid_1km.csv"))
@@ -396,14 +411,16 @@ def fig12_hybrid(c):
     c.results["hybrid_1km"] = tab.round(3).to_dict(orient="index")
     c.results["hybrid_capacity_gain"] = {str(k): round(v, 3) for k, v in gain.items()}
     c.save(fig, "fig12_hybrid_bars.png", "Hybrid keeps 99.6% on-time like pools while 92% of traffic is sent keyless; trade-off: stored keys age longer")
+    xc = X["fig13"]
+    hy = CFG["hybrid"]
     lk = Link()
-    r = rates_at(1.0, lk)
+    r = rates_at(xc["link_km"], lk)
     P, k, s = r["pair_rate"], r["key_mode"] / r["pair_rate"], r["sdc_two_step"] / r["pair_rate"]
-    A = 300 / 330
-    Tn = 2400
-    up = outage_trace(Tn, np.random.default_rng(7))
-    d = 0.8 * A * P * k
-    cap = 120 * d
+    A = availability()
+    Tn = xc["duration_s"]
+    up = outage_trace(Tn, np.random.default_rng(xc["seed"]))
+    d = hy["demand_frac"] * A * P * k
+    cap = hy["buffer_s"] * d
     pool = cap
     mode = np.zeros(Tn, dtype=int)
     lvl = np.zeros(Tn)
@@ -451,10 +468,11 @@ def fig14_finite_key(c):
 
 def fig15_memory_needed(c):
     from transports import compose
-    p = werner_weights(0.985)
-    T2s = np.logspace(1, 5, 60)
+    xc = X["fig15"]
+    p = werner_weights(xc["fidelity"])
+    T2s = np.logspace(*xc["t2_grid_log10_s"])
     fig, ax = plt.subplots(figsize=(7.2, 3.8))
-    for wait, col, ls in [(30, INK, "-"), (120, G1, "--")]:
+    for wait, col, ls in zip(xc["outage_waits_s"], [INK, G1], ["-", "--"]):
         sec = [max(0, 2 - 2 * shannon(compose(p, 1 - np.exp(-wait / T2)))) for T2 in T2s]
         ax.semilogx(T2s, sec, color=col, ls=ls, label=f"Outage of {wait} s")
     ax.axhline(1 - shannon(p), color=ACC, lw=1)
@@ -467,22 +485,23 @@ def fig15_memory_needed(c):
 
 
 def fig16_scheduling(c):
-    T = 10000 if c.fast else 20000
+    xc = X["fig16"]
+    T = xc["duration_s"][c.mode]
     rows = []
-    for buf in [10, 30, 60, 120]:
-        for margin in [1.05, 1.5]:
+    for buf in xc["buffers_s"]:
+        for margin in xc["margins"]:
             for s in ["equal_up", "lowest_pool_first"]:
-                v = np.mean([schedule_sim(16, margin, buf, s, T=T, seed=sd)[0] for sd in range(2)])
+                v = np.mean([schedule_sim(xc["receivers"], margin, buf, s, T=T, seed=sd)[0] for sd in range(X["n_seeds"])])
                 rows.append(dict(buffer_s=buf, margin=margin, sched=s, on_time=v))
     df = pd.DataFrame(rows)
     df.to_csv(os.path.join(c.out, "data", "multicast_scheduling.csv"), index=False)
     fig, ax = plt.subplots(figsize=(7.2, 4))
     for (m, s), g in df.groupby(["margin", "sched"]):
         col = ACC if s == "lowest_pool_first" else INK
-        ls = "-" if m == 1.5 else "--"
+        ls = "-" if m == max(xc["margins"]) else "--"
         ax.plot(g.buffer_s, g.on_time * 100, color=col, ls=ls, marker="o", ms=4, label=f"{'lowest-pool-first' if s != 'equal_up' else 'equal split'}, source {int((m-1)*100)}% over demand")
     ax.set_xlabel("Pool depth per receiver (seconds of demand)")
-    ax.set_ylabel("All 16 receivers on time (%)")
+    ax.set_ylabel(f"All {xc['receivers']} receivers on time (%)")
     ax.set_title("Multicast: buffer depth matters, extra source capacity barely does")
     ax.legend(fontsize=8, loc="lower right")
     c.save(fig, "fig16_scheduling.png", "Growing buffer 10->120 s lifts on-time 40%->97%; adding 45% more source capacity changes it by ~2 points")

@@ -1,5 +1,9 @@
 import numpy as np
 from functools import reduce
+from config import CFG
+
+NUM = CFG["numerics"]
+FK = CFG["finite_key"]
 
 I2 = np.eye(2, dtype=complex)
 X = np.array([[0, 1], [1, 0]], dtype=complex)
@@ -23,19 +27,19 @@ BELL = [kron(P, I2) @ PHI_P for P in PAULIS]
 
 
 def h2(x):
-    x = np.clip(x, 1e-15, 1 - 1e-15)
+    x = np.clip(x, NUM["entropy_clip"], 1 - NUM["entropy_clip"])
     return float(-x * np.log2(x) - (1 - x) * np.log2(1 - x))
 
 
 def shannon(p):
     p = np.asarray(p, dtype=float)
-    p = p[p > 1e-15]
+    p = p[p > NUM["probability_cutoff"]]
     return float(-(p * np.log2(p)).sum())
 
 
 def vn_entropy(rho):
     w = np.linalg.eigvalsh((rho + rho.conj().T) / 2)
-    w = w[w > 1e-12]
+    w = w[w > NUM["eigenvalue_cutoff"]]
     return float(-(w * np.log2(w)).sum())
 
 
@@ -166,7 +170,7 @@ def key_rate_di(S, Q):
     return max(0.0, 1 - h2(Q) - h2(arg))
 
 
-def finite_key_penalty(n, eps=1e-10):
+def finite_key_penalty(n, eps=FK["epsilon"]):
     if n <= 0:
         return 1.0
-    return 7 * np.sqrt(np.log2(2 / eps) / n)
+    return FK["aep_coefficient"] * np.sqrt(np.log2(2 / eps) / n)

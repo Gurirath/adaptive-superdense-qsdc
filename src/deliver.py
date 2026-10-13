@@ -1,9 +1,14 @@
 import numpy as np
 import pandas as pd
 from transports import Link, rates_at, eta_fiber
+from config import CFG
+
+D = CFG["delivery"]
+O = CFG["outage"]
+X = CFG["experiments"]
 
 
-def outage_trace(T, rng, mean_up=300.0, mean_down=30.0):
+def outage_trace(T, rng, mean_up=O["mean_up_s"], mean_down=O["mean_down_s"]):
     up = np.ones(T, dtype=bool)
     t, state = 0, True
     while t < T:
@@ -21,14 +26,14 @@ def hop_rate(L, lk):
 def swap_rate(hops, L, lk, memory=False):
     eta = eta_fiber(L, lk) * lk.eta_det
     pairs = lk.clock_hz * lk.mu
-    key_pp = 0.8
+    key_pp = D["key_per_swapped_pair"]
     if not memory:
         return pairs * eta ** hops * (lk.bsm_eff ** (hops - 1)) * key_pp
     link = pairs * eta
-    return link * (lk.bsm_eff ** (hops - 1)) * key_pp / (1 + 0.5 * np.log2(max(hops, 1)) * 2)
+    return link * (lk.bsm_eff ** (hops - 1)) * key_pp / (1 + D["swap_memory_coeff"] * np.log2(max(hops, 1)) * D["swap_memory_factor"])
 
 
-def simulate_path(hops, strategy, T=100000, L=25.0, demand=256e3, deadline=1, pool_cap=5e8, seed=0, lk=None, paths=3, k_of_n=2, avail=(300.0, 30.0)):
+def simulate_path(hops, strategy, T=D["duration_s"], L=D["hop_length_km"], demand=D["demand_bps"], deadline=D["deadline_s"], pool_cap=D["pool_cap_bits"], seed=D["seed"], lk=None, paths=D["paths"], k_of_n=D["k_of_n"], avail=(O["mean_up_s"], O["mean_down_s"])):
     lk = lk or Link()
     rng = np.random.default_rng(seed)
     R = hop_rate(L, lk)
@@ -44,7 +49,7 @@ def simulate_path(hops, strategy, T=100000, L=25.0, demand=256e3, deadline=1, po
         served = path_up[0] & (swap_rate(hops, L, lk, True) * deadline >= demand)
     elif strategy in ("pool_trusted_relay", "pool_end_to_end_swap"):
         if strategy == "pool_trusted_relay":
-            pools = np.full(hops, pool_cap / 10)
+            pools = np.full(hops, pool_cap / D["pool_initial_divisor"])
             gen = np.array(ups[0], dtype=float) * R
             for t in range(T):
                 pools = np.minimum(pool_cap, pools + gen[:, t])
@@ -52,7 +57,7 @@ def simulate_path(hops, strategy, T=100000, L=25.0, demand=256e3, deadline=1, po
                     pools -= demand
                     served[t] = True
         else:
-            pool = pool_cap / 10
+            pool = pool_cap / D["pool_initial_divisor"]
             g = swap_rate(hops, L, lk, True)
             for t in range(T):
                 if path_up[0][t]:
@@ -64,7 +69,7 @@ def simulate_path(hops, strategy, T=100000, L=25.0, demand=256e3, deadline=1, po
         cnt = np.sum([p & (R >= demand / k_of_n) for p in path_up], axis=0)
         served = cnt >= k_of_n
     elif strategy == "multipath_pool_k_of_n":
-        pools = np.full((n_paths, hops), pool_cap / 10)
+        pools = np.full((n_paths, hops), pool_cap / D["pool_initial_divisor"])
         gen = np.array(ups, dtype=float) * R
         share = demand
         for t in range(T):
@@ -93,13 +98,13 @@ EXPOSURE = {
 
 if __name__ == "__main__":
     lk = Link()
-    print("hop rate 25 km:", round(hop_rate(25.0, lk)))
-    for h in [1, 2, 4, 8]:
-        print("swap no mem", h, swap_rate(h, 25.0, lk), "mem", swap_rate(h, 25.0, lk, True))
+    print(f"hop rate {D['hop_length_km']:g} km:", round(hop_rate(D["hop_length_km"], lk)))
+    for h in CFG["standalone"]["deliver_print_hops"]:
+        print("swap no mem", h, swap_rate(h, D["hop_length_km"], lk), "mem", swap_rate(h, D["hop_length_km"], lk, True))
     rows = []
-    for h in [1, 2, 3, 4, 6, 8, 10]:
+    for h in X["fig07"]["hops"]:
         for s in STRATS:
-            v = np.mean([simulate_path(h, s, T=40000, seed=sd) for sd in range(2)])
+            v = np.mean([simulate_path(h, s, T=X["fig07"]["duration_s"]["full"], seed=sd) for sd in range(X["n_seeds"])])
             rows.append({"hops": h, "strategy": s, "on_time": v})
             print(h, s, round(v, 4), flush=True)
     df = pd.DataFrame(rows)

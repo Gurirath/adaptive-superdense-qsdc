@@ -1,8 +1,13 @@
 import numpy as np
 from deliver import outage_trace
+from config import CFG
+
+P = CFG["pools"]
+PT = P["trace"]
+O = CFG["outage"]
 
 
-def pool_sim(h, rho, buf_s, T=60000, seed=0, R=1.0, avail=(300.0, 30.0)):
+def pool_sim(h, rho, buf_s, T=P["duration_s"], seed=P["seed"], R=P["source_rate"], avail=(O["mean_up_s"], O["mean_down_s"])):
     rng = np.random.default_rng(seed)
     A = avail[0] / sum(avail)
     d = rho * A * R
@@ -18,7 +23,7 @@ def pool_sim(h, rho, buf_s, T=60000, seed=0, R=1.0, avail=(300.0, 30.0)):
     return served / T
 
 
-def pool_trace(h=4, rho=0.8, buf_s=120, T=3600, seed=3, R=1.0, avail=(300.0, 30.0)):
+def pool_trace(h=PT["hops"], rho=PT["load"], buf_s=PT["buffer_s"], T=PT["duration_s"], seed=PT["seed"], R=P["source_rate"], avail=(O["mean_up_s"], O["mean_down_s"])):
     rng = np.random.default_rng(seed)
     A = avail[0] / sum(avail)
     d = rho * A * R
