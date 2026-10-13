@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from core import werner_weights, shannon, sdc_information, sdc_linear_optics, chsh_from_weights
 from transports import Link, rates_at, sweep as transport_sweep, switch_threshold_eta, eta_fiber
 from detect import telemetry, features, static_threshold, multi_threshold, run as detect_run, ATTACKS
-from deliver import simulate_path, outage_trace, STRATS
+from deliver import mean_on_time, outage_trace, STRATS
 from pools import pool_sim, pool_trace
 from multicast import mean_group_rate, on_time as mc_on_time, ghz_rate
 from extend_net import hybrid_link, schedule_sim
@@ -263,7 +263,7 @@ def fig07_on_time_vs_hops(c):
     rows = []
     for h in hops:
         for s in STRATS:
-            rows.append(dict(hops=h, strategy=s, on_time=np.mean([simulate_path(h, s, T=T, seed=sd) for sd in range(X["n_seeds"])])))
+            rows.append(dict(hops=h, strategy=s, on_time=mean_on_time(h, s, T)))
     df = pd.DataFrame(rows)
     df.to_csv(os.path.join(c.out, "data", "on_time_vs_hops.csv"), index=False)
     piv = df.pivot(index="hops", columns="strategy", values="on_time")
@@ -509,7 +509,7 @@ def fig16_scheduling(c):
 
 def fig17_pareto(c):
     import sweep as sw
-    df = sw.df.copy()
+    df = sw.build(c.mode)
     df.to_csv(os.path.join(c.out, "data", "design_space_sweep.csv"), index=False)
     fig, ax = plt.subplots(figsize=(7.4, 4.6))
     d = df.fillna(0)

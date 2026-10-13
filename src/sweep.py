@@ -2,6 +2,7 @@ import itertools
 import numpy as np
 import pandas as pd
 from transports import Link, rates_at
+from deliver import mean_on_time
 from config import CFG
 
 SW = CFG["sweep"]
@@ -15,9 +16,19 @@ TRANSPORTS = ["key_otp", "two_step_sdc", "adaptive", "dl04", "ping_pong"]
 AUTHS = ["none", "pqc_signature", "wegman_carter_recycled", "qia_entanglement"]
 DELIVERY = ["jit_trusted_relay", "pool_trusted_relay", "multipath_pool_2of3", "e2e_swap_pool", "pool_pqc_fallback"]
 
-ON_TIME_4HOP = SW["on_time_4hop"]
-ITS_FRACTION = SW["its_fraction"]
-QSDC_JIT_4HOP = SW["qsdc_jit_per_hop"] ** SW["qsdc_jit_hops"]
+SIMULATED = {
+    "jit_trusted_relay": "jit_trusted_relay",
+    "pool_trusted_relay": "pool_trusted_relay",
+    "multipath_pool_2of3": "multipath_pool_k_of_n",
+    "e2e_swap_pool": "pool_end_to_end_swap",
+}
+
+
+def on_time_table(mode="full"):
+    T = CFG["experiments"]["fig07"]["duration_s"][mode]
+    table = {d: mean_on_time(SW["on_time_hops"], s, T) for d, s in SIMULATED.items()}
+    table["pool_pqc_fallback"] = SW["pqc_fallback_on_time"]
+    return table
 
 
 def rate(dist, cert, transport, L):
@@ -52,38 +63,40 @@ def attacks(dist, monitor, transport, auth, delivery):
     return a
 
 
-def on_time(transport, delivery):
+def on_time(transport, delivery, table):
     if transport in ("two_step_sdc", "dl04", "ping_pong"):
-        return QSDC_JIT_4HOP if delivery == "jit_trusted_relay" else SW["qsdc_non_jit_on_time"]
-    return ON_TIME_4HOP[delivery]
+        return table["jit_trusted_relay"] if delivery == "jit_trusted_relay" else SW["qsdc_non_jit_on_time"]
+    return table[delivery]
 
 
-rows = []
-cache = {}
-for dist in DISTS:
-    for cert in CERTS[dist]:
-        for transport in TRANSPORTS:
-            if dist == "di_heralded" and transport in ("two_step_sdc", "adaptive", "dl04"):
-                continue
-            if dist == "mdi" and transport == "dl04":
-                continue
-            key = (dist, cert, transport)
-            cache[key] = tuple(rate(dist, cert, transport, L) for L in SW["rate_distances_km"])
-            for monitor, auth, delivery in itertools.product(MONITORS, AUTHS, DELIVERY):
-                if transport in ("two_step_sdc", "dl04", "ping_pong") and delivery not in ("jit_trusted_relay", "e2e_swap_pool"):
+def build(mode="full"):
+    table = on_time_table(mode)
+    rows = []
+    cache = {}
+    for dist in DISTS:
+        for cert in CERTS[dist]:
+            for transport in TRANSPORTS:
+                if dist == "di_heralded" and transport in ("two_step_sdc", "adaptive", "dl04"):
                     continue
-                a = attacks(dist, monitor, transport, auth, delivery)
-                r10, r50 = cache[key]
-                rows.append({
-                    "dist": dist, "cert": cert, "monitor": monitor, "transport": transport, "auth": auth, "delivery": delivery,
-                    "security": 1 - np.mean(list(a.values())),
-                    "worst_open": max(a, key=a.get) if max(a.values()) > 0 else "none",
-                    "worst_level": max(a.values()),
-                    "rate_10km": r10, "rate_50km": r50,
-                    "on_time_4hop": on_time(transport, delivery),
-                })
+                if dist == "mdi" and transport == "dl04":
+                    continue
+                key = (dist, cert, transport)
+                cache[key] = tuple(rate(dist, cert, transport, L) for L in SW["rate_distances_km"])
+                for monitor, auth, delivery in itertools.product(MONITORS, AUTHS, DELIVERY):
+                    if transport in ("two_step_sdc", "dl04", "ping_pong") and delivery not in ("jit_trusted_relay", "e2e_swap_pool"):
+                        continue
+                    a = attacks(dist, monitor, transport, auth, delivery)
+                    r10, r50 = cache[key]
+                    rows.append({
+                        "dist": dist, "cert": cert, "monitor": monitor, "transport": transport, "auth": auth, "delivery": delivery,
+                        "security": 1 - np.mean(list(a.values())),
+                        "worst_open": max(a, key=a.get) if max(a.values()) > 0 else "none",
+                        "worst_level": max(a.values()),
+                        "rate_10km": r10, "rate_50km": r50,
+                        "on_time_4hop": on_time(transport, delivery, table),
+                    })
 
-df = pd.DataFrame(rows)
+    return pd.DataFrame(rows)
 
 
 def pareto(d, cols):
@@ -96,6 +109,7 @@ def pareto(d, cols):
 
 
 if __name__ == "__main__":
+    df = build()
     print("total combinations:", len(df))
     df.to_csv("out_sweep.csv", index=False)
     cols = ["security", "rate_10km", "rate_50km", "on_time_4hop"]

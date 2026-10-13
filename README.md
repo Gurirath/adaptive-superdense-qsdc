@@ -51,27 +51,50 @@ A pre-generated copy of all results is already included in `results/`, in case y
 
 Every model parameter lives in `config.yaml`. The simulation code holds no parameter values of its own; it reads them through `src/config.py`.
 
-Each entry has a `value` and a `source`, and may have a `unit` and a `note`:
+The file has two top-level sections:
+
+- `physics` holds everything that describes the modelled system: hardware, channels, attacks, protocols and security. Every entry states where its value comes from.
+- `simulation` holds how the model is run and plotted: seeds, durations, grids, numerical tolerances and the cases each figure shows. These are plain values with no source, because they are choices about the computation, not claims about the world.
+
+A `physics` entry has a `value` and a `source`, and may have a `unit` and a `note`. A `simulation` entry is just a value:
 
 ```yaml
-link:
-  alpha_db_km:
-    value: 0.2
-    unit: dB/km
-    source: "Gisin, N., Ribordy, G., Tittel, W., Zbinden, H. (2002). Quantum cryptography. ..."
-    note: "The review gives 0.2 dB/km as the attenuation of standard telecom fibre at 1550 nm."
+physics:
+  link:
+    alpha_db_km:
+      value: 0.2
+      unit: "dB/km"
+      source: "Gisin, N., Ribordy, G., Tittel, W., Zbinden, H. (2002). Quantum cryptography. ..."
+      note: "The review gives 0.2 dB/km as the attenuation of standard telecom fibre at 1550 nm."
+
+simulation:
+  delivery:
+    duration_s: 100000
+    seed: 0
 ```
 
 A `source` is one of two things:
 
-- A published reference with authors, year, title and DOI. Each one was checked against its DOI record and against the paper's abstract or full text. Where the paper supports a value without stating it exactly, the `note` says so.
+- A published reference with authors, year, title and a DOI or arXiv number. Each one was checked against its DOI or arXiv record and against the paper's abstract or full text. Where the paper supports a value without stating it exactly, the `note` says so.
 - The word `assumption` followed by a one-line reason. This covers design choices, modelled quantities and anything for which no reference could be verified.
 
-Five values carry a published reference: fibre attenuation, detector efficiency, Bell-measurement efficiency, the finite-key correction coefficient and the error-correction efficiency. Everything else is an assumption and is labelled as one.
+The file has 101 physics parameters and 90 simulation settings. Seven physics parameters carry a published reference:
 
-The sections of `config.yaml` are:
+| Parameter | Value | Reference |
+| --- | --- | --- |
+| Fibre attenuation | 0.2 dB/km | Gisin et al. 2002, Rev. Mod. Phys. 74, 145 |
+| Detector efficiency | 0.85 | Marsili et al. 2013, Nature Photonics 7, 210 |
+| Memory efficiency | 0.9 | Wang et al. 2019, Nature Photonics 13, 346 |
+| Bell-measurement efficiency | 0.5 | Calsamiglia and Lütkenhaus 2001, Appl. Phys. B 72, 67 |
+| Ping-pong round-trip bound | 0.75 | Zhang 2004, arXiv:quant-ph/0402099 |
+| Finite-key correction coefficient | 7 | Scarani and Renner 2008, Phys. Rev. Lett. 100, 200501 |
+| Error-correction efficiency | 1.16 | Lim et al. 2014, Phys. Rev. A 89, 022307 |
 
-| Section | What it holds |
+The other 94 physics parameters are assumptions and are labelled as such. For the detector and memory efficiencies the papers show the value is achievable but do not state that exact number; their notes say so.
+
+Both sections use the same group names, and the code sees them merged, so `delivery` contains its physics parameters and its simulation settings together:
+
+| Group | What it holds |
 | --- | --- |
 | `link` | Fibre, source, detector and memory parameters of one link |
 | `transport` | Settings of the rate model shared by all transports |
@@ -81,21 +104,23 @@ The sections of `config.yaml` are:
 | `multicast`, `hybrid`, `scheduling` | 1-to-N, QSDC + pool hybrid and shared-source scheduling settings |
 | `finite_key` | Finite-key security and block-size settings |
 | `detection` | Synthetic telemetry, attack signatures and detector settings |
-| `sweep` | Scoring inputs and exposure weights of the design-space sweep |
-| `experiments` | Grids, durations and seeds used by each figure |
+| `sweep` | Exposure weights and scoring settings of the design-space sweep |
+| `experiments` | Grids, durations, seeds and displayed cases of each figure |
 | `standalone` | Values used only when a module is run on its own |
 
-To try a different value, edit its `value` in `config.yaml` and re-run. Write numbers with an exponent as `1.0e-8`, not `1e-8`: the YAML reader treats the second form as text, and the loader stops with an error if it finds text where a number should be.
+The design-space sweep (fig17) does not store on-time delivery figures. It computes them when it runs, by calling the same delivery simulation as fig07 at 4 hops with the same duration and seeds, so the two always agree. Keyless transports use the just-in-time trusted-relay result. The one exception is delivery with a post-quantum fallback, which is on time by construction and is set to 1 in `config.yaml`.
+
+To try a different value, edit it in `config.yaml` and re-run. Write numbers with an exponent as `1.0e-8`, not `1e-8`: the YAML reader treats the second form as text, and the loader stops with an error if it finds text where a number should be.
 
 Mathematical constants stay in the code because they are part of the formulas, not choices: the factor of 10 in decibel conversion, the Werner-state and depolarising-channel coefficients, 0.5 as the largest possible error rate, and array dimensions. Plot styling in `src/figures.py` (figure sizes, colours, label positions) also stays in the code.
 
-Moving the parameters into `config.yaml` did not change any result: the figures, the CSV files and `results/key_numbers.json` are byte-for-byte the same as before.
+Moving the parameters into `config.yaml` did not change any result. Computing the sweep's on-time figures at run time changed only the on-time column of `results/data/design_space_sweep.csv` and the shading in fig17; `results/key_numbers.json` and every other figure and CSV file are byte-for-byte the same as before.
 
 ## Code layout
 
 - `run_all.py` — entry point
 - `config.yaml` — every parameter, with its source
-- `src/config.py` — loads `config.yaml` and checks that every entry has a numeric value and a source
+- `src/config.py` — loads `config.yaml`, checks that every value is numeric and every physics parameter has a source
 - `src/figures.py` — builds every figure and the numbers file
 - `src/core.py` — density matrices, Bell states, Holevo information, key-rate formulas
 - `src/transports.py` — fiber link model and secure rate of each transport

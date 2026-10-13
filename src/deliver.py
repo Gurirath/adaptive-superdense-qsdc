@@ -84,6 +84,10 @@ def simulate_path(hops, strategy, T=D["duration_s"], L=D["hop_length_km"], deman
     return served.mean()
 
 
+def mean_on_time(hops, strategy, T):
+    return np.mean([simulate_path(hops, strategy, T=T, seed=sd) for sd in range(X["n_seeds"])])
+
+
 STRATS = ["jit_trusted_relay", "jit_swap_no_memory", "jit_swap_memory", "pool_trusted_relay", "pool_end_to_end_swap", "multipath_jit_k_of_n", "multipath_pool_k_of_n"]
 EXPOSURE = {
     "jit_trusted_relay": "h-1 relays see key",
@@ -104,7 +108,7 @@ if __name__ == "__main__":
     rows = []
     for h in X["fig07"]["hops"]:
         for s in STRATS:
-            v = np.mean([simulate_path(h, s, T=X["fig07"]["duration_s"]["full"], seed=sd) for sd in range(X["n_seeds"])])
+            v = mean_on_time(h, s, X["fig07"]["duration_s"]["full"])
             rows.append({"hops": h, "strategy": s, "on_time": v})
             print(h, s, round(v, 4), flush=True)
     df = pd.DataFrame(rows)

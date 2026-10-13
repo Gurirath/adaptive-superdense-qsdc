@@ -1,765 +1,535 @@
-link:
-  alpha_db_km:
-    value: 0.2
-    unit: dB/km
-    source: "Gisin, N., Ribordy, G., Tittel, W., Zbinden, H. (2002). Quantum cryptography. Reviews of Modern Physics 74, 145-195. DOI 10.1103/RevModPhys.74.145"
-    note: "The review gives 0.2 dB/km as the attenuation of standard telecom fibre at 1550 nm."
-  eta_det:
-    value: 0.85
-    unit: fraction
-    source: "Marsili, F., Verma, V. B., Stern, J. A., Harrington, S., Lita, A. E., Gerrits, T., Vayshenker, I., Baek, B., Shaw, M. D., Mirin, R. P., Nam, S. W. (2013). Detecting single infrared photons with 93% system efficiency. Nature Photonics 7, 210-214. DOI 10.1038/nphoton.2013.13"
-    note: "The paper reports system detection efficiency above 90% at 1520-1610 nm. It shows 0.85 is achievable; the exact value 0.85 is a round number chosen below that, not a figure from the paper."
-  p_dark:
-    value: 1.0e-8
-    unit: probability per pulse
-    source: "assumption: equivalent to about 10 dark counts per second in a 1 ns detection window, chosen as a low-noise detector setting"
-  e_mis:
-    value: 0.01
-    unit: fraction
-    source: "assumption: 1% optical misalignment error, a round value for a well-aligned link"
-  clock_hz:
-    value: 1.0e+9
-    unit: Hz
-    source: "assumption: 1 GHz pump clock, a round value for a fast entangled-pair source"
-  mu:
-    value: 0.01
-    unit: pairs per pulse
-    source: "assumption: low pair probability per pulse so that multi-pair emission can be neglected"
-  t2_mem_s:
-    value: 0.01
-    unit: s
-    source: "assumption: 10 ms quantum-memory coherence time, a design choice that fig04 varies from 1 ms to 1 s"
-  eta_mem:
-    value: 0.9
-    unit: fraction
-    source: "assumption: 90% memory storage-and-retrieval efficiency, an optimistic design choice"
-  t_check_s:
-    value: 1.0e-3
-    unit: s
-    source: "assumption: 1 ms for the classical check before the encoded qubit is returned"
-  c_fiber_km_s:
-    value: 2.0e+5
-    unit: km/s
-    source: "assumption: speed of light in silica fibre, c divided by a refractive index of about 1.5, rounded"
-  bsm_eff:
-    value: 0.5
-    unit: fraction
-    source: "Calsamiglia, J., Lütkenhaus, N. (2001). Maximum efficiency of a linear-optical Bell-state analyzer. Applied Physics B 72, 67-71. DOI 10.1007/s003400000484"
-    note: "The paper shows that linear optics with vacuum ancillas cannot discriminate the four Bell states with probability above 50%."
-  di_herald_hz:
-    value: 10.0
-    unit: Hz
-    source: "assumption: heralded entanglement rate for the device-independent option at zero distance, a placeholder value not taken from an experiment"
-  block_bits:
-    value: 1.0e+6
-    unit: bits
-    source: "assumption: block size used when the finite-key penalty is switched on in the transport model"
-
-transport:
-  di_qber:
-    value: 0.02
-    unit: fraction
-    source: "assumption: fixed 2% error rate for heralded device-independent pairs"
-  ping_pong_min_round_trip:
-    value: 0.75
-    unit: fraction
-    source: "assumption: round-trip transmission below which the ping-pong protocol is treated as insecure; a specific published threshold could not be verified"
-  distance_grid_km:
-    value: [0, 201, 1]
-    unit: "start, stop, step in km"
-    source: "assumption: distances evaluated in rate sweeps, 0 to 200 km in 1 km steps"
-
-numerics:
-  entropy_clip:
-    value: 1.0e-15
-    source: "assumption: numerical guard that keeps the binary entropy away from log(0)"
-  probability_cutoff:
-    value: 1.0e-15
-    source: "assumption: numerical guard, probabilities below this are dropped from Shannon entropy"
-  eigenvalue_cutoff:
-    value: 1.0e-12
-    source: "assumption: numerical guard, eigenvalues below this are dropped from von Neumann entropy"
-  weight_tolerance:
-    value: 1.0e-12
-    source: "assumption: numerical guard, Bell-diagonal weights more negative than this are rejected"
-  worst_case_grid:
-    value: 400
-    source: "assumption: number of grid points when searching for the worst-case state compatible with the measured error rates"
-
-outage:
-  mean_up_s:
-    value: 300.0
-    unit: s
-    source: "assumption: mean time a link stays up, modelled not measured"
-  mean_down_s:
-    value: 30.0
-    unit: s
-    source: "assumption: mean outage length, modelled not measured"
-
-delivery:
-  key_per_swapped_pair:
-    value: 0.8
-    unit: secure bits per pair
-    source: "assumption: secure key fraction per end-to-end swapped pair, a flat value rather than a computed one"
-  swap_memory_coeff:
-    value: 0.5
-    source: "assumption: heuristic coefficient in the memory-assisted swapping overhead 1 + coeff * factor * log2(hops)"
-  swap_memory_factor:
-    value: 2
-    source: "assumption: heuristic factor in the memory-assisted swapping overhead 1 + coeff * factor * log2(hops)"
-  duration_s:
-    value: 100000
-    unit: s
-    source: "assumption: default simulated time for a path simulation"
-  hop_length_km:
-    value: 25.0
-    unit: km
-    source: "assumption: fibre length of every hop"
-  demand_bps:
-    value: 256000.0
-    unit: bits/s
-    source: "assumption: key demand of one 256 kbit/s one-time-pad stream"
-  deadline_s:
-    value: 1
-    unit: s
-    source: "assumption: a key request must be served within one time step"
-  pool_cap_bits:
-    value: 5.0e+8
-    unit: bits
-    source: "assumption: per-hop key pool capacity"
-  pool_initial_divisor:
-    value: 10
-    source: "assumption: pools start at one tenth of capacity"
-  seed:
-    value: 0
-    source: "assumption: default random seed"
-  paths:
-    value: 3
-    source: "assumption: number of disjoint paths in the multipath strategies"
-  k_of_n:
-    value: 2
-    source: "assumption: number of paths that must deliver in the multipath strategies"
-
-pools:
-  duration_s:
-    value: 60000
-    unit: s
-    source: "assumption: default simulated time for the pool-sizing simulation"
-  seed:
-    value: 0
-    source: "assumption: default random seed"
-  source_rate:
-    value: 1.0
-    unit: normalised
-    source: "assumption: key generation rate normalised to 1 so that load is a pure ratio"
-  trace:
-    hops:
-      value: 4
-      source: "assumption: default path length for the pool time-series trace"
-    load:
-      value: 0.8
-      source: "assumption: default demand as a fraction of average supply"
-    buffer_s:
-      value: 120
-      unit: s
-      source: "assumption: default pool depth in seconds of demand"
-    duration_s:
-      value: 3600
-      unit: s
-      source: "assumption: default length of the trace"
-    seed:
-      value: 3
-      source: "assumption: default random seed"
-
-multicast:
-  hub_link_km:
-    value: 20.0
-    unit: km
-    source: "assumption: fibre length from the hub to each receiver"
-  key_frac_ghz:
-    value: 0.8
-    unit: secure bits per GHZ state
-    source: "assumption: secure key fraction per distributed GHZ state, a flat value rather than a computed one"
-  ghz_deterministic_source_hz:
-    value: 1.0e+8
-    unit: Hz
-    source: "assumption: emission rate of an idealised deterministic GHZ source, not a demonstrated device"
-  ghz_spdc_clock_hz:
-    value: 1.0e+9
-    unit: Hz
-    source: "assumption: clock rate of the pair-source-based GHZ scheme, kept as its own parameter because the original code did not tie it to link.clock_hz"
-  buffer_s:
-    value: 120
-    unit: s
-    source: "assumption: default per-receiver pool depth in seconds of demand"
-  duration_s:
-    value: 30000
-    unit: s
-    source: "assumption: default simulated time"
-  seed:
-    value: 0
-    source: "assumption: default random seed"
-
-hybrid:
-  link_km:
-    value: 2.0
-    unit: km
-    source: "assumption: default link length for the QSDC plus pool hybrid"
-  demand_frac:
-    value: 0.8
-    source: "assumption: demand as a fraction of the average key supply"
-  buffer_s:
-    value: 120
-    unit: s
-    source: "assumption: pool depth in seconds of demand"
-  duration_s:
-    value: 40000
-    unit: s
-    source: "assumption: default simulated time"
-  seed:
-    value: 0
-    source: "assumption: default random seed"
-
-scheduling:
-  receivers:
-    value: 16
-    source: "assumption: default number of receivers sharing one source"
-  margin:
-    value: 1.2
-    source: "assumption: default source capacity as a multiple of total demand"
-  buffer_s:
-    value: 60
-    unit: s
-    source: "assumption: default per-receiver pool depth in seconds of demand"
-  duration_s:
-    value: 20000
-    unit: s
-    source: "assumption: default simulated time"
-  seed:
-    value: 0
-    source: "assumption: default random seed"
-  demand_per_receiver:
-    value: 1.0
-    unit: normalised
-    source: "assumption: demand normalised to 1 per receiver per second"
-
-finite_key:
-  epsilon:
-    value: 1.0e-10
-    source: "assumption: overall security parameter, a commonly used order of magnitude"
-  aep_coefficient:
-    value: 7
-    source: "Scarani, V., Renner, R. (2008). Quantum Cryptography with Finite Resources: Unconditional Security Bound for Discrete-Variable Protocols with One-Way Postprocessing. Physical Review Letters 100, 200501. DOI 10.1103/PhysRevLett.100.200501"
-    note: "Lemma 2 of the paper gives the correction 7 * sqrt(log2(2 / epsilon) / n). The paper's epsilon there is a smoothing parameter; this code uses the single overall epsilon in its place."
-  f_ec:
-    value: 1.16
-    source: "Lim, C. C. W., Curty, M., Walenta, N., Xu, F., Zbinden, H. (2014). Concise security bounds for practical decoy-state quantum key distribution. Physical Review A 89, 022307. DOI 10.1103/PhysRevA.89.022307"
-    note: "The paper fixes the error-correction efficiency at 1.16 in its simulations."
-  pe_fraction:
-    value: 0.1
-    source: "assumption: fraction of each block sacrificed for parameter estimation"
-  min_block:
-    value: 1.0e+3
-    unit: pairs
-    source: "assumption: blocks smaller than this are treated as yielding no key"
-  deadline_s:
-    value: 1.0
-    unit: s
-    source: "assumption: just-in-time delivery must finish a block within one second"
-  pool_block_cap:
-    value: 1.0e+10
-    unit: pairs
-    source: "assumption: largest block a pool accumulates before post-processing"
-  pool_accumulation_s:
-    value: 3600
-    unit: s
-    source: "assumption: a pool can accumulate pairs for up to one hour per block"
-  distances_km:
-    value: [10, 50, 100, 150, 200, 250]
-    unit: km
-    source: "assumption: distances at which the finite-key comparison is evaluated"
-
-detection:
-  duration_s:
-    value: 86400
-    unit: s
-    source: "assumption: one day of telemetry at one sample per second"
-  seed:
-    value: 0
-    source: "assumption: default random seed"
-  mean_attack_interval_s:
-    value: 1800
-    unit: s
-    source: "assumption: attacks start on average every 30 minutes, modelled not measured"
-  attack_duration_s:
-    value: [5, 60]
-    unit: s
-    source: "assumption: attack length drawn uniformly from this range"
-  attack_type_codes:
-    value: [1, 4]
-    source: "assumption: attack type drawn uniformly from codes 1 to 3 (upper bound exclusive)"
-  attack_strength:
-    value: [0.02, 0.12]
-    source: "assumption: attack strength drawn uniformly from this range"
-  drift_amplitude:
-    value: 0.004
-    source: "assumption: amplitude of the daily polarisation drift in the X-basis error"
-  drift_period_s:
-    value: 86400
-    unit: s
-    source: "assumption: polarisation drift follows a 24-hour cycle"
-  drift_phase:
-    value: [0, 6]
-    unit: rad
-    source: "assumption: random starting phase of the drift"
-  drift_walk_sigma:
-    value: 2.0e-5
-    source: "assumption: per-second step of the random-walk part of the drift"
-  drift_walk_clip:
-    value: 0.004
-    source: "assumption: bound on the random-walk part of the drift"
-  raman_mean_interval_s:
-    value: 1200
-    unit: s
-    source: "assumption: benign noise bursts start on average every 20 minutes"
-  raman_duration_s:
-    value: [10, 120]
-    unit: s
-    source: "assumption: noise burst length drawn uniformly from this range"
-  raman_amplitude:
-    value: [0.5, 3.0]
-    source: "assumption: noise burst size as a multiple of the base dark count rate"
-  sifted_per_s:
-    value: 20000
-    unit: counts/s
-    source: "assumption: sifted detections per second used to sample the error rates"
-  singles_per_s:
-    value: 2.0e+5
-    unit: counts/s
-    source: "assumption: baseline singles count rate"
-  dark_per_s:
-    value: 200.0
-    unit: counts/s
-    source: "assumption: baseline noise count rate in the telemetry model"
-  accidental_reference_counts:
-    value: 2.0e+4
-    unit: counts/s
-    source: "assumption: signal level against which noise counts are compared to get the accidental fraction"
-  base_error:
-    value: 0.008
-    source: "assumption: intrinsic error rate in each basis"
-  accidental_error:
-    value: 0.5
-    source: "assumption: an accidental coincidence gives a random outcome, so half are errors"
-  singles_per_noise_count:
-    value: 50
-    source: "assumption: singles added per noise count"
-  double_click_fraction:
-    value: 5.0e-4
-    source: "assumption: baseline double-click rate as a fraction of sifted detections"
-  double_click_raman_factor:
-    value: 0.5
-    source: "assumption: sensitivity of double clicks to noise bursts"
-  backreflection_mean:
-    value: 1.0
-    unit: normalised
-    source: "assumption: back-reflection monitor normalised to 1 with no attack"
-  backreflection_sigma:
-    value: 0.05
-    source: "assumption: noise of the back-reflection monitor"
-  intercept_resend_error_divisor:
-    value: 4
-    source: "assumption: modelled signature, intercept-resend raises each error rate by strength / 4"
-  blinding_dark_factor:
-    value: 0.05
-    source: "assumption: modelled signature, blinding suppresses dark counts to 5%"
-  blinding_double_click_factor:
-    value: 0.05
-    source: "assumption: modelled signature, blinding suppresses double clicks to 5%"
-  blinding_error_factor:
-    value: 0.7
-    source: "assumption: modelled signature, blinding lowers the error rates to 70%"
-  blinding_singles_factor:
-    value: 0.5
-    source: "assumption: modelled signature, blinding lowers singles by 0.5 * strength"
-  trojan_backreflection_factor:
-    value: 3
-    source: "assumption: modelled signature, a Trojan-horse probe raises back-reflection by 3 * strength"
-  trojan_error_divisor:
-    value: 10
-    source: "assumption: modelled signature, a Trojan-horse probe raises the X-basis error by strength / 10"
-  error_clip:
-    value: [0, 0.5]
-    source: "assumption: error probabilities are bounded between 0 and one half"
-  chsh_noise_sigma:
-    value: 0.01
-    source: "assumption: measurement noise on the CHSH estimate"
-  feature_windows_s:
-    value: [5, 15, 60]
-    unit: s
-    source: "assumption: rolling-mean windows used as detector features"
-  baseline_window_s:
-    value: 600
-    unit: s
-    source: "assumption: rolling-median window used as the slow baseline"
-  correlation_windows_s:
-    value: [15, 60]
-    unit: s
-    source: "assumption: windows for the error-rate versus dark-count correlation feature"
-  correlation_min_periods:
-    value: 3
-    source: "assumption: minimum samples before a rolling correlation is reported"
-  false_alarm:
-    value: 0.01
-    source: "assumption: false-alarm budget at which all detectors are compared"
-  multi_monitor_count:
-    value: 4
-    source: "assumption: the false-alarm budget is split equally across the four monitored quantities"
-  cusum_slack:
-    value: 0.5
-    source: "assumption: conventional CUSUM slack of half a standard deviation"
-  cusum_cap_factor:
-    value: 3
-    source: "assumption: the CUSUM statistic is capped at 3 times its threshold so alarms clear"
-  cusum_search:
-    value: [0.5, 200.0]
-    source: "assumption: bracket for the bisection that tunes the CUSUM threshold"
-  cusum_search_steps:
-    value: 30
-    source: "assumption: number of bisection steps"
-  classifier_max_iter:
-    value: 300
-    source: "assumption: gradient-boosting hyperparameter, not tuned against real data"
-  classifier_learning_rate:
-    value: 0.08
-    source: "assumption: gradient-boosting hyperparameter, not tuned against real data"
-  classifier_random_state:
-    value: 0
-    source: "assumption: fixed seed for the classifier"
-  train_seeds:
-    value: [1, 2, 3]
-    source: "assumption: telemetry days used for training"
-  test_seeds:
-    value: [11, 12]
-    source: "assumption: telemetry days used for testing"
-  validation_seed:
-    value: 21
-    source: "assumption: telemetry day used to set the ML alarm threshold"
-
-sweep:
-  rate_distances_km:
-    value: [10.0, 50.0]
-    unit: km
-    source: "assumption: distances at which every design is scored for rate"
-  on_time_4hop:
-    value:
-      jit_trusted_relay: 0.674
-      pool_trusted_relay: 0.987
-      multipath_pool_2of3: 1.0
-      e2e_swap_pool: 0.241
-      pool_pqc_fallback: 1.0
-    source: "assumption: fixed on-time fractions used as scoring inputs; close to the 4-hop delivery simulation outputs but not recomputed at run time"
-  its_fraction:
-    value:
-      pool_pqc_fallback: 0.987
-    source: "assumption: share of traffic kept information-theoretically secure under post-quantum fallback; defined in the original code but not used in any result"
-  qsdc_jit_per_hop:
-    value: 0.906
-    source: "assumption: fixed per-hop on-time fraction for keyless transports; close to the simulated single-hop value but not recomputed at run time"
-  qsdc_jit_hops:
-    value: 4
-    source: "assumption: path length at which designs are scored for on-time delivery"
-  qsdc_non_jit_on_time:
-    value: 0.0
-    source: "assumption: keyless transports cannot use stored keys, so they score zero with pooled delivery"
-  ping_pong_rate:
-    value: 0.0
-    unit: bits/s
-    source: "assumption: ping-pong is scored as carrying no secure bits"
-  exposure:
-    detector_side_channel:
-      value:
-        direct_by_monitor:
-          static_qber: 1.0
-          multi_monitor: 0.5
-          ml_telemetry: 0.5
-        other: 0.0
-      source: "assumption: judgement score from 0 (closed) to 1 (open); measurement-device-independent and device-independent designs close it"
-    trojan_horse:
-      value:
-        two_way: 1.0
-        one_way: 0.5
-        monitor_factor:
-          static_qber: 1.0
-          multi_monitor: 0.5
-          ml_telemetry: 0.5
-      source: "assumption: judgement score from 0 (closed) to 1 (open); two-way transports are more exposed and monitoring halves it"
-    channel_eavesdrop:
-      value:
-        ping_pong: 1.0
-        other: 0.0
-      source: "assumption: judgement score; only ping-pong leaves the channel open"
-    source_side_channel:
-      value:
-        dl04: 0.5
-        mdi: 0.25
-        other: 0.0
-      source: "assumption: judgement score from 0 (closed) to 1 (open)"
-    mitm:
-      value:
-        none: 1.0
-        pqc_signature: 0.25
-        wegman_carter_recycled: 0.0
-        qia_entanglement: 0.0
-      source: "assumption: judgement score from 0 (closed) to 1 (open) for each authentication method"
-    relay_compromise:
-      value:
-        jit_trusted_relay: 1.0
-        pool_trusted_relay: 1.0
-        multipath_pool_2of3: 0.33
-        e2e_swap_pool: 0.0
-        pool_pqc_fallback: 1.0
-      source: "assumption: judgement score from 0 (closed) to 1 (open) for each delivery method"
-    key_at_rest:
-      value:
-        keyless_transport: 0.0
-        pool_delivery: 0.25
-        other: 0.0
-      source: "assumption: judgement score; stored keys add a small exposure"
-    fallback_computational:
-      value:
-        pool_pqc_fallback: 0.25
-        other: 0.0
-      source: "assumption: judgement score; falling back to post-quantum cryptography is only computationally secure"
-
-experiments:
-  n_seeds:
-    value: 2
-    source: "assumption: Monte Carlo runs are averaged over seeds 0 and 1"
-  fig01:
-    report_distances_km:
-      value: [10, 50]
-      unit: km
-      source: "assumption: distances at which headline rates are reported"
-  fig02:
-    fidelity_grid:
-      value: [0.78, 1.0, 45]
-      unit: "start, stop, points"
-      source: "assumption: range of pair fidelities plotted"
-    report_fidelity:
-      value: 0.95
-      source: "assumption: fidelity at which headline numbers are reported"
-  fig03:
-    eta_grid:
-      value: [0.05, 1, 200]
-      unit: "start, stop, points"
-      source: "assumption: range of return-leg transmissions plotted"
-    fidelities:
-      value: [0.99, 0.95, 0.90]
-      source: "assumption: fidelities plotted to show the rule does not depend on fidelity"
-    noisy_fidelity:
-      value: 0.95
-      source: "assumption: fidelity of the noisy-return-leg example curve"
-    noisy_return_noise:
-      value: 0.05
-      source: "assumption: return-leg depolarising noise of the example curve"
-    dimensions:
-      value: [2, 3, 4, 8, 16]
-      source: "assumption: qudit dimensions at which the switching threshold is reported"
-    report_fidelity:
-      value: 0.95
-      source: "assumption: fidelity at which the switching thresholds are reported"
-    report_return_noise:
+physics:
+  link:
+    alpha_db_km:
+      value: 0.2
+      unit: "dB/km"
+      source: "Gisin, N., Ribordy, G., Tittel, W., Zbinden, H. (2002). Quantum cryptography. Reviews of Modern Physics 74, 145-195. DOI 10.1103/RevModPhys.74.145"
+      note: "The review gives 0.2 dB/km as the attenuation of standard telecom fibre at 1550 nm."
+    eta_det:
+      value: 0.85
+      unit: "fraction"
+      source: "Marsili, F., Verma, V. B., Stern, J. A., Harrington, S., Lita, A. E., Gerrits, T., Vayshenker, I., Baek, B., Shaw, M. D., Mirin, R. P., Nam, S. W. (2013). Detecting single infrared photons with 93% system efficiency. Nature Photonics 7, 210-214. DOI 10.1038/nphoton.2013.13"
+      note: "The paper reports system detection efficiency above 90% at 1520-1610 nm. It shows 0.85 is achievable; the exact value 0.85 is a round number chosen below that, not a figure from the paper."
+    p_dark:
+      value: 1.0e-08
+      unit: "probability per pulse"
+      source: "assumption: equivalent to about 10 dark counts per second in a 1 ns detection window, chosen as a low-noise detector setting"
+    e_mis:
+      value: 0.01
+      unit: "fraction"
+      source: "assumption: 1% optical misalignment error, a round value for a well-aligned link"
+    clock_hz:
+      value: 1000000000.0
+      unit: "Hz"
+      source: "assumption: 1 GHz pump clock, a round value for a fast entangled-pair source"
+    mu:
+      value: 0.01
+      unit: "pairs per pulse"
+      source: "assumption: low pair probability per pulse so that multi-pair emission can be neglected"
+    t2_mem_s:
+      value: 0.01
+      unit: "s"
+      source: "assumption: 10 ms quantum-memory coherence time, a design choice that fig04 varies from 1 ms to 1 s"
+    eta_mem:
+      value: 0.9
+      unit: "fraction"
+      source: "Wang, Y., Li, J., Zhang, S., Su, K., Zhou, Y., Liao, K., Du, S., Yan, H., Zhu, S. L. (2019). Efficient quantum memory for single-photon polarization qubits. Nature Photonics 13, 346. DOI 10.1038/s41566-019-0368-8"
+      note: "The paper demonstrates above 85% efficiency for polarization qubits and up to 90.6% for single-channel storage. It shows 0.9 is within reach; the exact value 0.9 is a round number, and the paper is not the source of the 10 ms coherence time."
+    t_check_s:
+      value: 0.001
+      unit: "s"
+      source: "assumption: 1 ms for the classical check before the encoded qubit is returned"
+    c_fiber_km_s:
+      value: 200000.0
+      unit: "km/s"
+      source: "assumption: speed of light in silica fibre, c divided by a refractive index of about 1.5, rounded"
+    bsm_eff:
+      value: 0.5
+      unit: "fraction"
+      source: "Calsamiglia, J., Lütkenhaus, N. (2001). Maximum efficiency of a linear-optical Bell-state analyzer. Applied Physics B 72, 67-71. DOI 10.1007/s003400000484"
+      note: "The paper shows that linear optics with vacuum ancillas cannot discriminate the four Bell states with probability above 50%."
+    di_herald_hz:
+      value: 10.0
+      unit: "Hz"
+      source: "assumption: heralded entanglement rate for the device-independent option at zero distance, a placeholder value not taken from an experiment"
+    block_bits:
+      value: 1000000.0
+      unit: "bits"
+      source: "assumption: block size used when the finite-key penalty is switched on in the transport model"
+  transport:
+    di_qber:
       value: 0.02
-      source: "assumption: return-leg noise at which the shifted threshold is reported"
-  fig04:
-    t2_values_s:
-      value: [0.001, 0.01, 0.1, 1.0]
-      unit: s
-      source: "assumption: memory coherence times compared"
-    perfect_t2_s:
-      value: 1.0e+3
-      unit: s
-      source: "assumption: coherence time long enough to stand in for a perfect memory"
-    perfect_eta_mem:
-      value: 1.0
-      source: "assumption: lossless memory for the perfect-memory case"
-    distance_grid_km:
-      value: [0, 31, 1]
-      unit: "start, stop, step in km"
-      source: "assumption: distances searched for the crossover"
-  fig05:
-    train_seeds:
-      value:
-        fast: [1, 2]
-        full: [1, 2, 3]
-      source: "assumption: telemetry days used for training in fast and full runs"
-    test_seeds:
-      value: [11, 12]
-      source: "assumption: telemetry days used for testing"
-    display_seed:
-      value: 11
-      source: "assumption: telemetry day shown in the time-series figure"
-    display_duration_s:
-      value: 86400
-      unit: s
-      source: "assumption: length of the displayed telemetry day"
-    window_s:
-      value: 5400
-      unit: s
-      source: "assumption: 90-minute window shown in the time-series figure"
-    window_step_s:
-      value: 600
-      unit: s
-      source: "assumption: step used when searching for a window that contains every attack type"
-  fig07:
-    duration_s:
-      value:
-        fast: 20000
-        full: 40000
-      unit: s
-      source: "assumption: simulated time in fast and full runs"
-    hops:
-      value: [1, 2, 3, 4, 6, 8, 10]
-      source: "assumption: path lengths compared"
-  fig08:
-    hops:
-      value: 4
-      source: "assumption: path length shown"
-    load:
+      unit: "fraction"
+      source: "assumption: fixed 2% error rate for heralded device-independent pairs"
+    ping_pong_min_round_trip:
+      value: 0.75
+      unit: "fraction"
+      source: "Zhang, Z. (2004). Correct mutual information, quantum bit error rate and secure transmission efficiency in Wojcik's eavesdropping scheme on ping-pong protocol. arXiv:quant-ph/0402099"
+      note: "The preprint corrects the 60% threshold of Wojcik (2003, Physical Review Letters 90, 157901) and concludes the ping-pong protocol is not secure for transmission efficiency at or below 75%. The code applies the bound to the round-trip transmission including detector efficiency."
+  outage:
+    mean_up_s:
+      value: 300.0
+      unit: "s"
+      source: "assumption: mean time a link stays up, modelled not measured"
+    mean_down_s:
+      value: 30.0
+      unit: "s"
+      source: "assumption: mean outage length, modelled not measured"
+  delivery:
+    key_per_swapped_pair:
       value: 0.8
-      source: "assumption: demand as a fraction of average supply"
+      unit: "secure bits per pair"
+      source: "assumption: secure key fraction per end-to-end swapped pair, a flat value rather than a computed one"
+    swap_memory_coeff:
+      value: 0.5
+      source: "assumption: heuristic coefficient in the memory-assisted swapping overhead 1 + coeff * factor * log2(hops)"
+    swap_memory_factor:
+      value: 2
+      source: "assumption: heuristic factor in the memory-assisted swapping overhead 1 + coeff * factor * log2(hops)"
+    hop_length_km:
+      value: 25.0
+      unit: "km"
+      source: "assumption: fibre length of every hop"
+    demand_bps:
+      value: 256000.0
+      unit: "bits/s"
+      source: "assumption: key demand of one 256 kbit/s one-time-pad stream"
+    deadline_s:
+      value: 1
+      unit: "s"
+      source: "assumption: a key request must be served within one time step"
+    pool_cap_bits:
+      value: 500000000.0
+      unit: "bits"
+      source: "assumption: per-hop key pool capacity"
+    pool_initial_divisor:
+      value: 10
+      source: "assumption: pools start at one tenth of capacity"
+    paths:
+      value: 3
+      source: "assumption: number of disjoint paths in the multipath strategies"
+    k_of_n:
+      value: 2
+      source: "assumption: number of paths that must deliver in the multipath strategies"
+  pools:
+    trace:
+      hops:
+        value: 4
+        source: "assumption: default path length for the pool time-series trace"
+      load:
+        value: 0.8
+        source: "assumption: default demand as a fraction of average supply"
+      buffer_s:
+        value: 120
+        unit: "s"
+        source: "assumption: default pool depth in seconds of demand"
+  multicast:
+    hub_link_km:
+      value: 20.0
+      unit: "km"
+      source: "assumption: fibre length from the hub to each receiver"
+    key_frac_ghz:
+      value: 0.8
+      unit: "secure bits per GHZ state"
+      source: "assumption: secure key fraction per distributed GHZ state, a flat value rather than a computed one"
+    ghz_deterministic_source_hz:
+      value: 100000000.0
+      unit: "Hz"
+      source: "assumption: emission rate of an idealised deterministic GHZ source, not a demonstrated device"
+    ghz_spdc_clock_hz:
+      value: 1000000000.0
+      unit: "Hz"
+      source: "assumption: clock rate of the pair-source-based GHZ scheme, kept as its own parameter because the original code did not tie it to link.clock_hz"
     buffer_s:
       value: 120
-      unit: s
-      source: "assumption: pool depth in seconds of demand"
-    duration_s:
-      value: 3600
-      unit: s
-      source: "assumption: one hour shown"
-    seed:
-      value: 5
-      source: "assumption: random seed of the displayed trace"
-  fig09:
-    duration_s:
-      value:
-        fast: 30000
-        full: 60000
-      unit: s
-      source: "assumption: simulated time in fast and full runs"
-    buffers_s:
-      value: [0, 10, 30, 60, 120, 300]
-      unit: s
-      source: "assumption: pool depths compared"
-    hops:
-      value: [1, 4, 8]
-      source: "assumption: path lengths compared"
-    loads:
-      value: [0.5, 0.95]
-      source: "assumption: light and tight load cases"
-    seed:
-      value: 0
-      source: "assumption: random seed"
-  fig10:
-    duration_s:
-      value:
-        fast: 15000
-        full: 30000
-      unit: s
-      source: "assumption: simulated time in fast and full runs"
-    receivers:
-      value: [2, 4, 8, 16, 32]
-      source: "assumption: group sizes compared"
-  fig11:
-    hub_links_km:
-      value: [0.5, 1, 2, 3, 5, 8]
-      unit: km
-      source: "assumption: hub-to-receiver distances compared"
-    receivers:
-      value: [2, 3, 4, 6, 8, 12, 16]
-      source: "assumption: group sizes compared"
-    bottleneck_km:
-      value: 50.0
-      unit: km
-      source: "assumption: length of the shared link between sender and hub"
-  fig12:
-    duration_s:
-      value:
-        fast: 20000
-        full: 40000
-      unit: s
-      source: "assumption: simulated time in fast and full runs"
-    link_lengths_km:
-      value: [1.0, 3.0, 5.0]
-      unit: km
-      source: "assumption: short-link lengths compared"
-    report_link_km:
-      value: 1.0
-      unit: km
-      source: "assumption: link length shown in the bar chart"
-  fig13:
+      unit: "s"
+      source: "assumption: default per-receiver pool depth in seconds of demand"
+  hybrid:
     link_km:
-      value: 1.0
-      unit: km
-      source: "assumption: link length shown"
-    duration_s:
-      value: 2400
-      unit: s
-      source: "assumption: 40 minutes shown"
-    seed:
-      value: 7
-      source: "assumption: random seed of the displayed trace"
-  fig15:
-    fidelity:
-      value: 0.985
-      source: "assumption: fidelity of the stored pairs"
-    t2_grid_log10_s:
-      value: [1, 5, 60]
-      unit: "start exponent, stop exponent, points"
-      source: "assumption: range of memory coherence times plotted"
-    outage_waits_s:
-      value: [30, 120]
-      unit: s
-      source: "assumption: outage lengths compared, one and four mean outages"
-  fig16:
-    duration_s:
-      value:
-        fast: 10000
-        full: 20000
-      unit: s
-      source: "assumption: simulated time in fast and full runs"
-    buffers_s:
-      value: [10, 30, 60, 120]
-      unit: s
-      source: "assumption: pool depths compared"
-    margins:
-      value: [1.05, 1.5]
-      source: "assumption: source capacities compared, as multiples of total demand"
+      value: 2.0
+      unit: "km"
+      source: "assumption: default link length for the QSDC plus pool hybrid"
+    demand_frac:
+      value: 0.8
+      source: "assumption: demand as a fraction of the average key supply"
+    buffer_s:
+      value: 120
+      unit: "s"
+      source: "assumption: pool depth in seconds of demand"
+  scheduling:
     receivers:
       value: 16
-      source: "assumption: group size"
+      source: "assumption: default number of receivers sharing one source"
+    margin:
+      value: 1.2
+      source: "assumption: default source capacity as a multiple of total demand"
+    buffer_s:
+      value: 60
+      unit: "s"
+      source: "assumption: default per-receiver pool depth in seconds of demand"
+  finite_key:
+    epsilon:
+      value: 1.0e-10
+      source: "assumption: overall security parameter, a commonly used order of magnitude"
+    aep_coefficient:
+      value: 7
+      source: "Scarani, V., Renner, R. (2008). Quantum Cryptography with Finite Resources: Unconditional Security Bound for Discrete-Variable Protocols with One-Way Postprocessing. Physical Review Letters 100, 200501. DOI 10.1103/PhysRevLett.100.200501"
+      note: "Lemma 2 of the paper gives the correction 7 * sqrt(log2(2 / epsilon) / n). The paper's epsilon there is a smoothing parameter; this code uses the single overall epsilon in its place."
+    f_ec:
+      value: 1.16
+      source: "Lim, C. C. W., Curty, M., Walenta, N., Xu, F., Zbinden, H. (2014). Concise security bounds for practical decoy-state quantum key distribution. Physical Review A 89, 022307. DOI 10.1103/PhysRevA.89.022307"
+      note: "The paper fixes the error-correction efficiency at 1.16 in its simulations."
+    pe_fraction:
+      value: 0.1
+      source: "assumption: fraction of each block sacrificed for parameter estimation"
+    min_block:
+      value: 1000.0
+      unit: "pairs"
+      source: "assumption: blocks smaller than this are treated as yielding no key"
+    deadline_s:
+      value: 1.0
+      unit: "s"
+      source: "assumption: just-in-time delivery must finish a block within one second"
+    pool_block_cap:
+      value: 10000000000.0
+      unit: "pairs"
+      source: "assumption: largest block a pool accumulates before post-processing"
+    pool_accumulation_s:
+      value: 3600
+      unit: "s"
+      source: "assumption: a pool can accumulate pairs for up to one hour per block"
+  detection:
+    mean_attack_interval_s:
+      value: 1800
+      unit: "s"
+      source: "assumption: attacks start on average every 30 minutes, modelled not measured"
+    attack_duration_s:
+      value: [5, 60]
+      unit: "s"
+      source: "assumption: attack length drawn uniformly from this range"
+    attack_type_codes:
+      value: [1, 4]
+      source: "assumption: attack type drawn uniformly from codes 1 to 3 (upper bound exclusive)"
+    attack_strength:
+      value: [0.02, 0.12]
+      source: "assumption: attack strength drawn uniformly from this range"
+    drift_amplitude:
+      value: 0.004
+      source: "assumption: amplitude of the daily polarisation drift in the X-basis error"
+    drift_period_s:
+      value: 86400
+      unit: "s"
+      source: "assumption: polarisation drift follows a 24-hour cycle"
+    drift_phase:
+      value: [0, 6]
+      unit: "rad"
+      source: "assumption: random starting phase of the drift"
+    drift_walk_sigma:
+      value: 2.0e-05
+      source: "assumption: per-second step of the random-walk part of the drift"
+    drift_walk_clip:
+      value: 0.004
+      source: "assumption: bound on the random-walk part of the drift"
+    raman_mean_interval_s:
+      value: 1200
+      unit: "s"
+      source: "assumption: benign noise bursts start on average every 20 minutes"
+    raman_duration_s:
+      value: [10, 120]
+      unit: "s"
+      source: "assumption: noise burst length drawn uniformly from this range"
+    raman_amplitude:
+      value: [0.5, 3.0]
+      source: "assumption: noise burst size as a multiple of the base dark count rate"
+    sifted_per_s:
+      value: 20000
+      unit: "counts/s"
+      source: "assumption: sifted detections per second used to sample the error rates"
+    singles_per_s:
+      value: 200000.0
+      unit: "counts/s"
+      source: "assumption: baseline singles count rate"
+    dark_per_s:
+      value: 200.0
+      unit: "counts/s"
+      source: "assumption: baseline noise count rate in the telemetry model"
+    accidental_reference_counts:
+      value: 20000.0
+      unit: "counts/s"
+      source: "assumption: signal level against which noise counts are compared to get the accidental fraction"
+    base_error:
+      value: 0.008
+      source: "assumption: intrinsic error rate in each basis"
+    accidental_error:
+      value: 0.5
+      source: "assumption: an accidental coincidence gives a random outcome, so half are errors"
+    singles_per_noise_count:
+      value: 50
+      source: "assumption: singles added per noise count"
+    double_click_fraction:
+      value: 0.0005
+      source: "assumption: baseline double-click rate as a fraction of sifted detections"
+    double_click_raman_factor:
+      value: 0.5
+      source: "assumption: sensitivity of double clicks to noise bursts"
+    backreflection_mean:
+      value: 1.0
+      unit: "normalised"
+      source: "assumption: back-reflection monitor normalised to 1 with no attack"
+    backreflection_sigma:
+      value: 0.05
+      source: "assumption: noise of the back-reflection monitor"
+    intercept_resend_error_divisor:
+      value: 4
+      source: "assumption: modelled signature, intercept-resend raises each error rate by strength / 4"
+    blinding_dark_factor:
+      value: 0.05
+      source: "assumption: modelled signature, blinding suppresses dark counts to 5%"
+    blinding_double_click_factor:
+      value: 0.05
+      source: "assumption: modelled signature, blinding suppresses double clicks to 5%"
+    blinding_error_factor:
+      value: 0.7
+      source: "assumption: modelled signature, blinding lowers the error rates to 70%"
+    blinding_singles_factor:
+      value: 0.5
+      source: "assumption: modelled signature, blinding lowers singles by 0.5 * strength"
+    trojan_backreflection_factor:
+      value: 3
+      source: "assumption: modelled signature, a Trojan-horse probe raises back-reflection by 3 * strength"
+    trojan_error_divisor:
+      value: 10
+      source: "assumption: modelled signature, a Trojan-horse probe raises the X-basis error by strength / 10"
+    chsh_noise_sigma:
+      value: 0.01
+      source: "assumption: measurement noise on the CHSH estimate"
+    feature_windows_s:
+      value: [5, 15, 60]
+      unit: "s"
+      source: "assumption: rolling-mean windows used as detector features"
+    baseline_window_s:
+      value: 600
+      unit: "s"
+      source: "assumption: rolling-median window used as the slow baseline"
+    correlation_windows_s:
+      value: [15, 60]
+      unit: "s"
+      source: "assumption: windows for the error-rate versus dark-count correlation feature"
+    correlation_min_periods:
+      value: 3
+      source: "assumption: minimum samples before a rolling correlation is reported"
+    false_alarm:
+      value: 0.01
+      source: "assumption: false-alarm budget at which all detectors are compared"
+    multi_monitor_count:
+      value: 4
+      source: "assumption: the false-alarm budget is split equally across the four monitored quantities"
+    cusum_slack:
+      value: 0.5
+      source: "assumption: conventional CUSUM slack of half a standard deviation"
+    cusum_cap_factor:
+      value: 3
+      source: "assumption: the CUSUM statistic is capped at 3 times its threshold so alarms clear"
+    classifier_max_iter:
+      value: 300
+      source: "assumption: gradient-boosting hyperparameter, not tuned against real data"
+    classifier_learning_rate:
+      value: 0.08
+      source: "assumption: gradient-boosting hyperparameter, not tuned against real data"
+  sweep:
+    qsdc_non_jit_on_time:
+      value: 0.0
+      source: "assumption: keyless transports cannot use stored keys, so they score zero with pooled delivery"
+    ping_pong_rate:
+      value: 0.0
+      unit: "bits/s"
+      source: "assumption: ping-pong is scored as carrying no secure bits"
+    exposure:
+      detector_side_channel:
+        value:
+          direct_by_monitor:
+            static_qber: 1.0
+            multi_monitor: 0.5
+            ml_telemetry: 0.5
+          other: 0.0
+        source: "assumption: judgement score from 0 (closed) to 1 (open); measurement-device-independent and device-independent designs close it"
+      trojan_horse:
+        value:
+          two_way: 1.0
+          one_way: 0.5
+          monitor_factor:
+            static_qber: 1.0
+            multi_monitor: 0.5
+            ml_telemetry: 0.5
+        source: "assumption: judgement score from 0 (closed) to 1 (open); two-way transports are more exposed and monitoring halves it"
+      channel_eavesdrop:
+        value:
+          ping_pong: 1.0
+          other: 0.0
+        source: "assumption: judgement score; only ping-pong leaves the channel open"
+      source_side_channel:
+        value:
+          dl04: 0.5
+          mdi: 0.25
+          other: 0.0
+        source: "assumption: judgement score from 0 (closed) to 1 (open)"
+      mitm:
+        value:
+          none: 1.0
+          pqc_signature: 0.25
+          wegman_carter_recycled: 0.0
+          qia_entanglement: 0.0
+        source: "assumption: judgement score from 0 (closed) to 1 (open) for each authentication method"
+      relay_compromise:
+        value:
+          jit_trusted_relay: 1.0
+          pool_trusted_relay: 1.0
+          multipath_pool_2of3: 0.33
+          e2e_swap_pool: 0.0
+          pool_pqc_fallback: 1.0
+        source: "assumption: judgement score from 0 (closed) to 1 (open) for each delivery method"
+      key_at_rest:
+        value:
+          keyless_transport: 0.0
+          pool_delivery: 0.25
+          other: 0.0
+        source: "assumption: judgement score; stored keys add a small exposure"
+      fallback_computational:
+        value:
+          pool_pqc_fallback: 0.25
+          other: 0.0
+        source: "assumption: judgement score; falling back to post-quantum cryptography is only computationally secure"
+    pqc_fallback_on_time:
+      value: 1.0
+      source: "assumption: with a post-quantum fallback a request is always served on time, by construction"
 
-standalone:
-  transports_print_km:
-    value: [0, 5, 10, 15, 20, 30, 50, 100, 150, 200]
-    unit: km
-    source: "assumption: distances printed when transports.py is run on its own"
-  transports_fidelities:
-    value: [1.0, 0.98, 0.95, 0.9]
-    source: "assumption: fidelities printed when transports.py is run on its own"
-  transports_min_rate:
-    value: 1
-    unit: bits/s
-    source: "assumption: rate treated as the reach limit when transports.py is run on its own"
-  deliver_print_hops:
-    value: [1, 2, 4, 8]
-    source: "assumption: path lengths printed when deliver.py is run on its own"
-  multicast_rate_receivers:
-    value: [2, 3, 4, 6, 8, 12, 16, 24, 32]
-    source: "assumption: group sizes printed when multicast.py is run on its own"
-  scheduling_margins:
-    value: [1.05, 1.2, 1.5]
-    source: "assumption: source capacities printed when extend_net.py is run on its own"
-  round_trip_bounds:
-    value: [0.6, 0.75]
-    source: "assumption: round-trip bounds printed when extend_theory.py is run on its own"
+simulation:
+  transport:
+    distance_grid_km: [0, 201, 1]
+  numerics:
+    entropy_clip: 1.0e-15
+    probability_cutoff: 1.0e-15
+    eigenvalue_cutoff: 1.0e-12
+    weight_tolerance: 1.0e-12
+    worst_case_grid: 400
+  delivery:
+    duration_s: 100000
+    seed: 0
+  pools:
+    duration_s: 60000
+    seed: 0
+    source_rate: 1.0
+    trace:
+      duration_s: 3600
+      seed: 3
+  multicast:
+    duration_s: 30000
+    seed: 0
+  hybrid:
+    duration_s: 40000
+    seed: 0
+  scheduling:
+    duration_s: 20000
+    seed: 0
+    demand_per_receiver: 1.0
+  finite_key:
+    distances_km: [10, 50, 100, 150, 200, 250]
+  detection:
+    duration_s: 86400
+    seed: 0
+    error_clip: [0, 0.5]
+    cusum_search: [0.5, 200.0]
+    cusum_search_steps: 30
+    classifier_random_state: 0
+    train_seeds: [1, 2, 3]
+    test_seeds: [11, 12]
+    validation_seed: 21
+  sweep:
+    rate_distances_km: [10.0, 50.0]
+    on_time_hops: 4
+  experiments:
+    n_seeds: 2
+    fig01:
+      report_distances_km: [10, 50]
+    fig02:
+      fidelity_grid: [0.78, 1.0, 45]
+      report_fidelity: 0.95
+    fig03:
+      eta_grid: [0.05, 1, 200]
+      fidelities: [0.99, 0.95, 0.9]
+      noisy_fidelity: 0.95
+      noisy_return_noise: 0.05
+      dimensions: [2, 3, 4, 8, 16]
+      report_fidelity: 0.95
+      report_return_noise: 0.02
+    fig04:
+      t2_values_s: [0.001, 0.01, 0.1, 1.0]
+      perfect_t2_s: 1000.0
+      perfect_eta_mem: 1.0
+      distance_grid_km: [0, 31, 1]
+    fig05:
+      train_seeds:
+        fast: [1, 2]
+        full: [1, 2, 3]
+      test_seeds: [11, 12]
+      display_seed: 11
+      display_duration_s: 86400
+      window_s: 5400
+      window_step_s: 600
+    fig07:
+      duration_s:
+        fast: 20000
+        full: 40000
+      hops: [1, 2, 3, 4, 6, 8, 10]
+    fig08:
+      hops: 4
+      load: 0.8
+      buffer_s: 120
+      duration_s: 3600
+      seed: 5
+    fig09:
+      duration_s:
+        fast: 30000
+        full: 60000
+      buffers_s: [0, 10, 30, 60, 120, 300]
+      hops: [1, 4, 8]
+      loads: [0.5, 0.95]
+      seed: 0
+    fig10:
+      duration_s:
+        fast: 15000
+        full: 30000
+      receivers: [2, 4, 8, 16, 32]
+    fig11:
+      hub_links_km: [0.5, 1, 2, 3, 5, 8]
+      receivers: [2, 3, 4, 6, 8, 12, 16]
+      bottleneck_km: 50.0
+    fig12:
+      duration_s:
+        fast: 20000
+        full: 40000
+      link_lengths_km: [1.0, 3.0, 5.0]
+      report_link_km: 1.0
+    fig13:
+      link_km: 1.0
+      duration_s: 2400
+      seed: 7
+    fig15:
+      fidelity: 0.985
+      t2_grid_log10_s: [1, 5, 60]
+      outage_waits_s: [30, 120]
+    fig16:
+      duration_s:
+        fast: 10000
+        full: 20000
+      buffers_s: [10, 30, 60, 120]
+      margins: [1.05, 1.5]
+      receivers: 16
+  standalone:
+    transports_print_km: [0, 5, 10, 15, 20, 30, 50, 100, 150, 200]
+    transports_fidelities: [1.0, 0.98, 0.95, 0.9]
+    transports_min_rate: 1
+    deliver_print_hops: [1, 2, 4, 8]
+    multicast_rate_receivers: [2, 3, 4, 6, 8, 12, 16, 24, 32]
+    scheduling_margins: [1.05, 1.2, 1.5]
+    round_trip_bounds: [0.6, 0.75]
