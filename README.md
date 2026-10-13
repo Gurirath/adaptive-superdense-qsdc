@@ -1,4 +1,4 @@
-# Adaptive Superdense Coding with Outage-Resilient Key Pools for Secure One-to-One and One-to-Many Quantum Communication
+# Adaptive superdense coding with outage-resilient key pools for secure one-to-one and one-to-many quantum communication
 
 Simulation code and results for the paper of the same title by Gurirath Singh Khurana and Mohit Agrawal, School of Computer Science and Engineering, Vellore Institute of Technology.
 
