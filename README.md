@@ -159,9 +159,39 @@ The finding is that the memory's coherence time is not what limits swapping here
 
 Memories raise the rate at every path length, by about 10 times at 4 hops, but just-in-time delivery only asks whether the rate meets the demand. Both versions meet it at 1 and 2 hops and miss it from 3 hops on, so their on-time results are identical. The rate is limited by link loss, Bell-measurement success and memory readout loss, not by memory decoherence.
 
+## Tests
+
+The `tests/` folder checks the quantitative claims the results rely on. Run it from the project folder:
+
+```bash
+pytest
+```
+
+It takes about a minute, nearly all of it the last test in the table.
+
+| File | What it checks |
+| --- | --- |
+| `test_states.py` | The four Bell states are orthonormal. Bell-diagonal states have trace 1, are positive semidefinite and carry the requested weights. The CHSH value is 2√2 at fidelity 1 and below 2 for separable Werner states. |
+| `test_superdense.py` | Superdense coding gives exactly twice the key-mode rate per pair on a noiseless return leg, for fidelities from 0.82 to 1. Eve's Holevo information, whether she only listens or intercepts the encoded qubit, never exceeds the pair entropy H(p). A linear-optics Bell measurement carries at most log2(3) bits. |
+| `test_switching.py` | The switching threshold is 0.5 in dimensions 2, 3, 4, 8 and 16, and about 0.533 with 2% noise on the return leg. |
+| `test_delivery.py` | Just-in-time on-time delivery over h hops matches (300/330)^h for every path length in fig07. |
+| `test_smoke.py` | `python run_all.py --fast` finishes without errors and writes all 17 figures and the numbers file. |
+
+Three points about how the tests are built:
+
+- They check identities and bounds, not stored numbers. Results can differ in the last digits between library versions, so comparing against `results/key_numbers.json` would fail for reasons that have nothing to do with correctness.
+- The factor of two between superdense coding and key mode is tested with tomographic certification, which is what the claim refers to. With BBM92 certification the two security bounds differ and the ratio is not exactly two.
+- The delivery test allows a difference of 0.03, because the simulation is a finite random sample. The observed difference is at most 0.014.
+
+The smoke test writes to a temporary folder, so running the tests never changes `results/`.
+
+`.github/workflows/tests.yml` runs the same tests on every push, on Python 3.10, 3.11 and 3.12.
+
 ## Code layout
 
 - `run_all.py` — entry point
+- `tests/` — the test suite
+- `pytest.ini` — tells pytest where the tests and the source are
 - `config.yaml` — every parameter, with its source
 - `src/config.py` — loads `config.yaml`, checks that every value is numeric, every physics parameter has a source and every design choice has a reason
 - `src/figures.py` — builds every figure and the numbers file
